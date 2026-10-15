@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Whaloween — The Vigil</title>
+  <meta name="description" content="Prototype lore page for Whaloween, a Halloween meta memecoin on Solana.">
+  <meta name="theme-color" content="#080705">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23080705'/%3E%3Ctext x='16' y='23' text-anchor='middle' font-size='18' fill='%23d4b15a' font-family='Georgia'%3EW%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cinzel:wght@500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080705;
+      --cream: #f3ead8;
+      --dim: #cbbfa6;
+      --gold: #d4b15a;
+      --gold-deep: #8d6a2e;
+      --line: rgba(212, 177, 90, 0.32);
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(900px 480px at 50% -8%, rgba(88, 42, 120, 0.2), transparent 58%),
+        var(--bg);
+      color: var(--cream);
+      font-family: "Cormorant Garamond", Palatino, Georgia, serif;
+      font-size: 22px;
+      line-height: 1.45;
+    }
+    img { max-width: 100%; height: auto; display: block; background: #000; }
+    a { color: inherit; }
+    button, .btn { font: inherit; }
+    :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+    ::selection { background: var(--gold); color: #1a1408; }
+    .sr {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+    }
+    .top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px 22px;
+      width: min(1100px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 22px 0 8px;
+    }
+    .brand, .switch a, .btn {
+      font-family: Cinzel, Palatino, Georgia, serif;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-size: 12px;
+      text-decoration: none;
+    }
+    .switch { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+    .switch a { color: var(--dim); }
+    .switch a[aria-current="page"] { color: var(--gold); }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      padding: 0 18px;
+      border: 1px solid var(--gold);
+      background: var(--gold);
+      color: #1a1408;
+      cursor: pointer;
+    }
+    .btn.ghost { background: transparent; color: var(--cream); }
+    .btn:hover { background: #f0d48a; }
+    .btn.ghost:hover { background: rgba(212, 177, 90, 0.12); }
+    .hero, .lore, .summon { width: min(1100px, calc(100% - 32px)); margin: 0 auto; }
+    .eyebrow {
+      margin: 28px 0 14px;
+      text-align: center;
+      font-family: Outfit, "Segoe UI", sans-serif;
+      font-size: 12px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+    .hero img { width: 100%; height: auto; }
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin: 18px 0 10px;
+    }
+    .lore { margin-top: 72px; margin-bottom: 64px; text-align: center; }
+    h1, h2 {
+      font-family: "Cinzel Decorative", Cinzel, Palatino, serif;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-wrap: balance;
+    }
+    h1 { margin: 0 0 18px; font-size: clamp(40px, 6vw, 72px); line-height: 1.02; }
+    .lede { margin: 0 auto 18px; max-width: 38rem; color: var(--dim); }
+    .lore p { margin: 0 auto 14px; max-width: 40rem; }
+    .stats {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      margin: 32px 0 0;
+      padding: 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+    .stats li { padding: 16px 8px 18px; }
+    .stats span, .summon dt, figcaption strong, .step span {
+      display: block;
+      font-family: Outfit, "Segoe UI", sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+    .stats strong, .summon dd {
+      font-family: Cinzel, serif;
+      font-size: 20px;
+      font-weight: 500;
+    }
+    .bleed { width: 100%; margin: 10px 0 28px; }
+    .bleed img { width: 100%; height: auto; }
+    .chapter {
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      gap: 18px;
+      width: min(1100px, calc(100% - 32px));
+      margin: 0 auto 56px;
+    }
+    .chapter .idx {
+      margin: 0;
+      padding-top: 8px;
+      font-family: Cinzel, serif;
+      color: var(--gold);
+      letter-spacing: 0.14em;
+    }
+    figcaption { margin-top: 12px; color: var(--dim); font-size: 20px; }
+    figcaption strong { margin-bottom: 4px; }
+    h2 {
+      width: min(1100px, calc(100% - 32px));
+      margin: 20px auto 28px;
+      font-size: clamp(32px, 4vw, 48px);
+      text-align: center;
+    }
+    .summon { margin-bottom: 48px; }
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+      margin: 0 0 28px;
+    }
+    .step {
+      margin: 0;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+    }
+    .step strong { display: block; margin: 8px 0; font-family: Cinzel, serif; font-size: 22px; font-weight: 500; }
+    .step p { margin: 0; color: var(--dim); font-size: 20px; }
+    .panel {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 22px;
+      align-items: center;
+      padding: 22px;
+      border: 1px solid var(--line);
+    }
+    .mint {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .mint code {
+      flex: 1 1 220px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      color: var(--cream);
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 14px;
+    }
+    .doors { display: flex; flex-wrap: wrap; gap: 10px; }
+    footer {
+      width: min(1100px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 8px 0 48px;
+      color: var(--dim);
+      font-family: Outfit, "Segoe UI", sans-serif;
+      font-size: 14px;
+    }
+    .toast:not([hidden]) {
+      display: block;
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 5;
+      padding: 12px 16px;
+      background: var(--cream);
+      color: #1a1408;
+      font-family: Outfit, sans-serif;
+      font-size: 14px;
+    }
+    @media (max-width: 800px) {
+      .stats, .steps, .panel, .chapter { grid-template-columns: 1fr; }
+      .chapter .idx { padding-top: 0; }
+      body { font-size: 20px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="../index.html">Whaloween</a>
+    <nav class="switch" aria-label="Prototypes">
+      <a href="../index.html">All</a>
+      <a href="../vigil/" aria-current="page">Vigil</a>
+      <a href="../street/">Street</a>
+      <a href="../drop/">Drop</a>
+    </nav>
+    <a class="btn" href="#summon">Summon</a>
+  </header>
+
+  <main>
+    <p class="eyebrow">Prototype 01 · The Vigil · Solana</p>
+    <section class="hero">
+      <img src="../assets/knight.jpg" width="1168" height="784" alt="A grey whale in engraved plate armor and a purple cape raises a glowing jack-o-lantern in a dark forest of twisted trees, spiderwebs, skulls, and black roses. The gold word Whaloween sits across the bottom.">
+      <div class="hero-actions">
+        <a class="btn" href="#summon">Summon $WHALOWEEN</a>
+        <a class="btn ghost" href="#company">Read the visits</a>
+      </div>
+    </section>
+
+    <section class="lore">
+      <h1>The whale who keeps the night.</h1>
+      <p class="lede">Whaloween is the Halloween meta on Solana. One whale. The armor stays. The robe stays. The face stays. Only the night around him changes.</p>
+      <p>He was painted for the forest, not the feed. Plate etched like old coin, a cape the color of a late plum, a pumpkin held high enough to light the roses. The word at his feet is the name and the ticker.</p>
+      <ul class="stats">
+        <li><span>Chain</span><strong>Solana</strong></li>
+        <li><span>Ticker</span><strong>$WHALOWEEN</strong></li>
+        <li><span>Meta</span><strong>Halloween</strong></li>
+      </ul>
+    </section>
+
+    <figure class="bleed">
+      <img src="../assets/banner-moon.jpg" width="1280" height="413" alt="A grey whale in dark armor holds a glowing jack-o-lantern in front of the word WHALOWEEN written in fire, with a full moon and bare trees behind.">
+    </figure>
+
+    <h2 id="company">The company he keeps</h2>
+
+    <article class="chapter">
+      <p class="idx">01</p>
+      <figure>
+        <img src="../assets/porch.jpg" width="1280" height="861" alt="A white whale in a deep red hooded robe stands in a moonlit forest of skulls and black roses, beside a fallen figure in a pale mask and dark coveralls. A glowing jack-o-lantern and a knife lie on the ground.">
+        <figcaption><strong>The porch</strong>The robe keeps still. Whatever happened on the ground has already told its story.</figcaption>
+      </figure>
+    </article>
+    <article class="chapter">
+      <p class="idx">02</p>
+      <figure>
+        <img src="../assets/mask.jpg" width="1168" height="784" alt="A white whale in a deep red hooded robe faces a figure in a black hood and a screaming white mask holding a knife, in a moonlit forest ringed with skulls and black roses.">
+        <figcaption><strong>The mask</strong>Two hoods. One moon. A blade that already knows the path.</figcaption>
+      </figure>
+    </article>
+    <article class="chapter">
+      <p class="idx">03</p>
+      <figure>
+        <img src="../assets/balloon.jpg" width="1168" height="784" alt="A white whale in a deep red hooded robe faces a clown in a silver costume holding a red balloon, in a moonlit forest carpeted with skulls and black roses.">
+        <figcaption><strong>The balloon</strong>Red against the fog. The whale does not blink first.</figcaption>
+      </figure>
+    </article>
+    <article class="chapter">
+      <p class="idx">04</p>
+      <figure>
+        <img src="../assets/grid.jpg" width="1168" height="784" alt="A white whale in a deep red hooded robe faces a pale figure in a black coat laced with pins and chains, under a full moon in a forest of skulls and black roses.">
+        <figcaption><strong>The grid</strong>A crown of iron, a cloak of chain, and a witness in burgundy.</figcaption>
+      </figure>
+    </article>
+    <article class="chapter">
+      <p class="idx">05</p>
+      <figure>
+        <img src="../assets/hook.jpg" width="1168" height="784" alt="A white whale in a deep red hooded robe faces a man in a long black coat with a hook for a hand and a swarm of bees, in a moonlit forest of skulls and black roses.">
+        <figcaption><strong>The hook</strong>The lane ends where the hook begins. Bees write the rest in the moonlight.</figcaption>
+      </figure>
+    </article>
+
+    <article class="chapter">
+      <p class="idx">06</p>
+      <figure>
+        <img src="../assets/street.jpg" width="1168" height="784" alt="A small grey whale in a brown fedora and a torn red-and-green striped sweater walks a wet Halloween street, holding a pumpkin bucket of candy, with a metal claw on the other hand.">
+        <figcaption><strong>The lane</strong>Before the forest, he still goes door to door. Candy in one hand. The claw is just for knocking.</figcaption>
+      </figure>
+    </article>
+
+    <figure class="bleed">
+      <img src="../assets/banner-fire.jpg" width="1280" height="416" alt="A grey whale in dark armor holds a jack-o-lantern crackling with lightning in front of the word WHALOWEEN written in fire, framed by spiderwebs, bats, and floating pumpkins.">
+    </figure>
+
+    <section class="summon" id="summon">
+      <h2>Summon him</h2>
+      <div class="steps">
+        <article class="step">
+          <span>01</span>
+          <strong>A Solana wallet</strong>
+          <p>Phantom or Solflare. The night runs on Solana, so the wallet does too.</p>
+        </article>
+        <article class="step">
+          <span>02</span>
+          <strong>A little SOL</strong>
+          <p>Enough for the swap and the network fee. Nothing on this page takes a deposit.</p>
+        </article>
+        <article class="step">
+          <span>03</span>
+          <strong>The mint, at launch</strong>
+          <p>When it is published, paste it into Jupiter and swap. Until then, the line below is the whole announcement.</p>
+        </article>
+      </div>
+      <div class="panel">
+        <div class="mint">
+          <code>Mint publishes at launch</code>
+          <button class="btn" type="button" data-copy="Whaloween ($WHALOWEEN) on Solana. Mint publishes at launch.">Copy</button>
+        </div>
+        <div class="doors">
+          <a class="btn ghost" href="https://jup.ag" target="_blank" rel="noopener noreferrer">Jupiter<span class="sr"> (opens in a new tab)</span></a>
+          <a class="btn ghost" href="https://pump.fun" target="_blank" rel="noopener noreferrer">Pump.fun<span class="sr"> (opens in a new tab)</span></a>
+          <a class="btn ghost" href="#soon-x" data-soon="The X account opens at launch.">X</a>
+          <a class="btn ghost" href="#soon-tg" data-soon="Telegram opens at launch.">Telegram</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Prototype only. Whaloween is a meme. It is not an investment, a promise, or financial advice. No mint is published on this page. Artwork is shown full frame, as supplied, with no filters or redraws.</p>
+  </footer>
+  <div class="toast" id="toast" role="status" hidden></div>
+  <script>
+    (function () {
+      var toast = document.getElementById("toast");
+      var timer;
+      function ping(message) {
+        toast.textContent = message;
+        toast.hidden = false;
+        clearTimeout(timer);
+        timer = setTimeout(function () { toast.hidden = true; }, 2600);
+      }
+      function fallback(text) {
+        var area = document.createElement("textarea");
+        area.value = text;
+        area.setAttribute("readonly", "");
+        area.style.position = "fixed";
+        area.style.left = "-9999px";
+        document.body.appendChild(area);
+        area.select();
+        var ok = false;
+        try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+        document.body.removeChild(area);
+        return ok ? Promise.resolve() : Promise.reject();
+      }
+      function copyText(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          return navigator.clipboard.writeText(text).catch(function () { return fallback(text); });
+        }
+        return fallback(text);
+      }
+      document.querySelectorAll("[data-copy]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          copyText(btn.getAttribute("data-copy")).then(function () {
+            ping("Copied. The mint is not live yet.");
+          }, function () {
+            ping(btn.getAttribute("data-copy"));
+          });
+        });
+      });
+      document.querySelectorAll("[data-soon]").forEach(function (btn) {
+        btn.addEventListener("click", function (event) {
+          event.preventDefault();
+          ping(btn.getAttribute("data-soon"));
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
