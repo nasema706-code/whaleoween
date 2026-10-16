@@ -272,8 +272,8 @@
       color: var(--muted);
       font-size: 18px;
     }
-    .gallery, .chart, .listen { scroll-margin-top: 88px; }
-    .gallery { padding: 0 0 36px; }
+    .lore, .chart, .listen { scroll-margin-top: 88px; }
+    .lore { padding: 8px 0 40px; }
     .chart { padding: 8px 0 48px; }
     .chart-frame {
       position: relative;
@@ -495,7 +495,7 @@
     .track-name { min-width: 0; }
     .track-len { font-size: 13px; }
     .track[aria-pressed="true"] .track-no { color: var(--ember); }
-    .gallery h2, .listen h2, .chart h2 {
+    .lore h2, .listen h2, .chart h2 {
       margin: 0 0 22px;
       font-family: Outfit, "Segoe UI", sans-serif;
       font-size: clamp(32px, 5vw, 56px);
@@ -506,16 +506,35 @@
       color: var(--cream);
       text-shadow: 0 4px 18px rgba(0, 0, 0, 0.55);
     }
-    .frames {
+    .lore-lede {
+      margin: 0 auto 28px;
+      max-width: 40rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 18px;
+    }
+    .chapters { display: grid; gap: 18px; }
+    .chapter {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
-    }
-    .frames figure {
+      grid-template-columns: minmax(0, 1.4fr) minmax(220px, 0.9fr);
+      gap: 16px 22px;
+      align-items: center;
+      padding: 12px;
       border: 1px solid var(--line);
-      box-shadow: 0 0 24px rgba(255, 138, 30, 0.16);
+      background: rgba(7, 11, 22, 0.55);
+      box-shadow: 0 0 24px rgba(255, 138, 30, 0.14);
     }
-    .swipe { display: none; }
+    .chapter figure { margin: 0; min-width: 0; }
+    .chapter img { background: #000; }
+    .chapter h3 {
+      margin: 0 0 8px;
+      color: var(--gold);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+    .chapter p { margin: 0; color: var(--cream); }
     footer {
       border-top: 1px solid var(--line);
       padding: 20px 0 calc(28px + env(safe-area-inset-bottom));
@@ -565,33 +584,8 @@
         padding: 0 4px;
       }
       .hero { padding: 28px 0 12px; }
-      .swipe {
-        display: block;
-        margin: 0 0 10px;
-        color: var(--muted);
-        font-size: 12px;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
-      }
-      .frames {
-        display: flex;
-        gap: 12px;
-        overflow-x: auto;
-        scroll-snap-type: x mandatory;
-        scroll-padding-inline: var(--pad);
-        padding-bottom: 8px;
-        margin-left: calc(var(--pad) * -1);
-        margin-right: calc(var(--pad-r) * -1);
-        padding-left: var(--pad);
-        padding-right: var(--pad-r);
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-      }
-      .frames::-webkit-scrollbar { display: none; }
-      .frames figure {
-        flex: 0 0 min(82vw, 420px);
-        scroll-snap-align: start;
-      }
+      .chapter { grid-template-columns: 1fr; gap: 12px; padding: 10px; }
+      .lore-lede { font-size: 16px; }
       .chart-frame { height: 360px; min-height: 320px; }
       .album {
         grid-template-columns: 1fr;
@@ -608,7 +602,6 @@
     }
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
-      .frames { scroll-snap-type: none; }
     }
   </style>
 </head>
@@ -618,7 +611,7 @@
       <a class="brand" href="./"><img class="brand-mark" src="assets/mark.jpg" width="600" height="600" alt=""><img class="brand-word" src="assets/wordmark.png" alt="Whaleoween"></a>
       <nav class="nav" aria-label="Whaleoween links">
         <a class="nav-link" href="play/">Play</a>
-        <a class="nav-link" href="#night">The night</a>
+        <a class="nav-link" href="#haunting">Haunting</a>
         <a class="nav-link" href="#listen">Listen</a>
         <a class="nav-link" href="#chart">Chart</a>
         <a class="nav-link" href="https://x.com/i/communities/2011205966444847116" target="_blank" rel="noopener noreferrer">X<span class="sr"> (opens in a new tab)</span></a>
@@ -640,19 +633,37 @@
           <code>9hv1i7xafDRDV6nEWtFZvqWYN19m6GThc2dSnZaEpump</code>
         </button>
       </section>
-      <section class="gallery" id="night" aria-label="Selected frames">
-        <h2>The night</h2>
-        <p class="swipe">Swipe the frames</p>
-        <div class="frames">
-          <figure>
-            <img src="assets/mask.jpg" width="1168" height="784" alt="A white whale in a deep red hooded robe faces a black-hooded figure in a white mask, holding a knife, in a moonlit forest.">
-          </figure>
-          <figure>
-            <img src="assets/balloon.jpg" width="1168" height="784" alt="A white whale in a deep red hooded robe faces a clown in a silver costume holding a red balloon, under a full moon.">
-          </figure>
-          <figure>
-            <img src="assets/hook.jpg" width="1168" height="784" alt="A white whale in a deep red hooded robe faces a man in a long black coat with a hook for a hand, as bees cross the moonlight.">
-          </figure>
+      <section class="lore" id="haunting" aria-label="The haunting">
+        <h2>The haunting</h2>
+        <p class="lore-lede">Same ocean. Different season. Before the moon is high he still walks the wet street, candy in the bucket. When the trees go thin he puts on the red hood and keeps the vigil.</p>
+        <div class="chapters">
+          <article class="chapter">
+            <figure>
+              <img src="assets/mask.jpg" width="1168" height="784" alt="A white whale in a deep red hooded robe faces a black-hooded figure in a white mask, holding a knife, in a moonlit forest.">
+            </figure>
+            <div>
+              <h3>The mask</h3>
+              <p>He waits in burgundy where the roses have gone black. A second hood arrives with a white face and a knife that already knows the path. Two hoods. One moon. The whale does not step aside.</p>
+            </div>
+          </article>
+          <article class="chapter">
+            <figure>
+              <img src="assets/balloon.jpg" width="1168" height="784" alt="A white whale in a deep red hooded robe faces a clown in a silver costume holding a red balloon, under a full moon.">
+            </figure>
+            <div>
+              <h3>The balloon</h3>
+              <p>Silver in the fog, a red balloon held up like a lantern. Skulls underfoot. The clown smiles first. The whale blinks last, and the night stays his.</p>
+            </div>
+          </article>
+          <article class="chapter">
+            <figure>
+              <img src="assets/hook.jpg" width="1168" height="784" alt="A white whale in a deep red hooded robe faces a man in a long black coat with a hook for a hand, as bees cross the moonlight.">
+            </figure>
+            <div>
+              <h3>The hook</h3>
+              <p>The lane ends where the iron hand begins. Bees cross the moonlight and write the rest. He keeps the robe still until the long night decides.</p>
+            </div>
+          </article>
         </div>
       </section>
       <section class="listen" id="listen" aria-label="Album">
