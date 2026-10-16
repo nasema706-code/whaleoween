@@ -111,8 +111,8 @@ header {
 }
 .brand-word {
   width: auto;
-  height: 36px;
-  max-width: min(240px, 52vw);
+  height: 46px;
+  max-width: min(220px, 42vw);
   object-fit: contain;
   object-position: left center;
   background: transparent;
@@ -643,7 +643,7 @@ footer p { margin: 0; max-width: 46rem; overflow-wrap: anywhere; }
   }
   .brand { font-size: 12px; letter-spacing: 0.08em; min-width: 0; }
   .brand img.brand-mark { width: 32px; height: 32px; max-width: 32px; }
-  .brand-word { height: 28px; max-width: min(140px, 34vw); }
+  .brand-word { height: 34px; max-width: min(140px, 34vw); }
   .nav { flex: 1 1 auto; flex-wrap: nowrap; justify-content: flex-end; gap: 4px; min-width: 0; }
   .nav .btn { min-height: 40px; padding: 0 8px; font-size: 12px; white-space: nowrap; }
   main {
