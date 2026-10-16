@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Keep the night — Whaleoween</title>
-  <meta name="description" content="Keep the night. Four ocean worlds and five levels for Whaleoween.">
+  <title>Tide Hunt — Whaleoween</title>
+  <meta name="description" content="Tide Hunt. Four ocean worlds and five levels for Whaleoween.">
   <meta name="theme-color" content="#07141c">
   <meta name="color-scheme" content="dark">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -28,16 +28,16 @@
       <section class="game-section" id="play">
         <div class="section-head">
           <p class="eyebrow">Play</p>
-          <h1>Keep the night.</h1>
-          <p>Four worlds, five levels, from the harbor to the wreck. Catch the candy. Clear a night and slash the flying haul.</p>
+          <h1>Tide Hunt</h1>
+          <p>Four worlds, five levels, from the harbor to the wreck. Catch the candy. Clear a tide and slash the flying haul.</p>
         </div>
         <div class="game-shell">
-          <div class="game-stage" aria-label="Whaleoween treat hunt">
+          <div class="game-stage" aria-label="Tide Hunt">
             <canvas id="game" width="900" height="560" tabindex="0" aria-label="Game canvas. Arrow keys or A and D move. Drag to slash in a bonus round. Space pauses."></canvas>
             <div class="game-overlay" id="overlay" data-screen="start">
               <div class="game-panel game-panel-start" id="panel-start">
                 <p class="game-brand">$WHALEOWEEN</p>
-                <h2>Keep the night</h2>
+                <h2>Tide Hunt</h2>
                 <p class="game-lede">Choose a whale. Catch the haul, then slash flying pumpkins and candy. Skulls and spiders bite back.</p>
                 <ul class="worlds">
                   <li>The Harbor</li>
@@ -54,11 +54,11 @@
                 <p class="game-hint">Arrow keys or A D to move. In a bonus round, drag to slash. Space to pause.</p>
               </div>
               <div class="game-panel" id="panel-pause" hidden>
-                <h2>The night waits</h2>
+                <h2>The tide waits</h2>
                 <p class="game-lede">Resume when you are ready.</p>
                 <div class="game-pause-actions">
                   <button class="btn" type="button" id="btn-resume">Resume</button>
-                  <button class="btn btn-ghost" type="button" id="btn-pause-quit">Leave the night</button>
+                  <button class="btn btn-ghost" type="button" id="btn-pause-quit">Leave the hunt</button>
                 </div>
               </div>
               <div class="game-panel" id="panel-over" hidden>
@@ -67,6 +67,16 @@
                 <p class="game-scoreline">Score <span id="final-score">0</span></p>
                 <p class="game-best">Best <span id="best-score">0</span></p>
                 <p class="game-lede" id="over-blurb">The lane will remember.</p>
+                <img class="score-card" id="score-card" alt="" hidden>
+                <label class="score-name">
+                  <span class="sr">Your name on the score card</span>
+                  <input id="score-name" type="text" name="player" maxlength="24" placeholder="Add your name" autocomplete="nickname" enterkeyhint="done" spellcheck="false">
+                </label>
+                <div class="score-share">
+                  <button class="btn" type="button" id="btn-share-x">Share on X</button>
+                  <button class="btn btn-ghost" type="button" id="btn-download-card">Download card</button>
+                </div>
+                <p class="score-share-note" id="score-share-note" aria-live="polite"></p>
                 <button class="btn" type="button" id="btn-again">Play again</button>
               </div>
             </div>

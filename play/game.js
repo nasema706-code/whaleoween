@@ -3,6 +3,137 @@ if (canvas) {
   initTreatHunt(canvas);
 }
 
+const PLAY_URL = "https://whaleoween.netlify.app/play/";
+let tideMark = null;
+
+function tideScoreText(score, name) {
+  const who = name ? `${name} scored` : "I scored";
+  return `${who} ${score} in Tide Hunt #Tidehunt #beatmyscore`;
+}
+
+function tideIntentUrl(score, name) {
+  const text = `${tideScoreText(score, name)}\n${PLAY_URL}`;
+  return `https://x.com/intent/tweet?text=${encodeURIComponent(text)}`;
+}
+
+function formatTideScore(score) {
+  return String(score).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function loadTideMark() {
+  if (tideMark) return Promise.resolve(tideMark);
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      tideMark = img;
+      resolve(img);
+    };
+    img.onerror = () => reject(new Error("mark"));
+    img.src = "../assets/mark.jpg";
+  });
+}
+
+function fitTideLine(g, text, maxWidth) {
+  let size = 24;
+  g.font = `500 ${size}px Outfit, "Segoe UI", sans-serif`;
+  while (size > 16 && g.measureText(text).width > maxWidth) {
+    size -= 1;
+    g.font = `500 ${size}px Outfit, "Segoe UI", sans-serif`;
+  }
+  return text;
+}
+
+function buildTideCard(data) {
+  const size = 1080;
+  const card = document.createElement("canvas");
+  card.width = size;
+  card.height = size;
+  const g = card.getContext("2d");
+  const fonts = document.fonts
+    ? Promise.all([
+        document.fonts.load("700 26px Outfit"),
+        document.fonts.load("700 108px Outfit"),
+        document.fonts.load("460 84px Fraunces"),
+        document.fonts.load("460 40px Fraunces"),
+        document.fonts.load("460 36px Fraunces"),
+      ]).catch(() => {})
+    : Promise.resolve();
+
+  return fonts.then(() => loadTideMark().catch(() => null)).then((img) => {
+    g.fillStyle = "#07141c";
+    g.fillRect(0, 0, size, size);
+
+    const moon = g.createRadialGradient(540, 160, 20, 540, 180, 480);
+    moon.addColorStop(0, "rgba(127, 212, 203, 0.24)");
+    moon.addColorStop(1, "rgba(127, 212, 203, 0)");
+    g.fillStyle = moon;
+    g.fillRect(0, 0, size, size);
+
+    const ember = g.createRadialGradient(160, 980, 10, 180, 980, 320);
+    ember.addColorStop(0, "rgba(232, 132, 58, 0.2)");
+    ember.addColorStop(1, "rgba(232, 132, 58, 0)");
+    g.fillStyle = ember;
+    g.fillRect(0, 0, size, size);
+
+    g.textAlign = "center";
+    g.fillStyle = "#7fd4cb";
+    g.font = '700 26px Outfit, "Segoe UI", sans-serif';
+    g.fillText("WHALEOWEEN", 540, 88);
+
+    g.fillStyle = "#e7f6f4";
+    g.font = '460 84px Fraunces, Georgia, serif';
+    g.fillText("Tide Hunt", 540, 172);
+
+    const player = (data.name || "").trim();
+    const art = player ? 440 : 500;
+    const ax = (size - art) / 2;
+    const ay = player ? 268 : 214;
+    if (player) {
+      g.fillStyle = "#e8843a";
+      g.font = '460 36px Fraunces, Georgia, serif';
+      let nameSize = 36;
+      while (nameSize > 22 && g.measureText(player).width > 900) {
+        nameSize -= 2;
+        g.font = `460 ${nameSize}px Fraunces, Georgia, serif`;
+      }
+      g.fillText(player, 540, 228);
+    }
+    g.fillStyle = "#062027";
+    g.fillRect(ax, ay, art, art);
+    if (img) {
+      const scale = Math.min(art / img.naturalWidth, art / img.naturalHeight);
+      const dw = img.naturalWidth * scale;
+      const dh = img.naturalHeight * scale;
+      g.drawImage(img, ax + (art - dw) / 2, ay + (art - dh) / 2, dw, dh);
+    }
+    g.strokeStyle = "rgba(127, 212, 203, 0.45)";
+    g.lineWidth = 2;
+    g.strokeRect(ax + 1, ay + 1, art - 2, art - 2);
+
+    g.fillStyle = "#7fd4cb";
+    g.font = '700 22px Outfit, "Segoe UI", sans-serif';
+    g.fillText("SCORE", 540, 792);
+
+    g.fillStyle = "#e7f6f4";
+    g.font = '700 108px Outfit, "Segoe UI", sans-serif';
+    g.fillText(formatTideScore(data.score), 540, 900);
+
+    g.fillStyle = "#e8843a";
+    g.font = '460 40px Fraunces, Georgia, serif';
+    g.fillText(data.title || "Tide Hunt", 540, 962);
+
+    g.fillStyle = "#8fadb3";
+    fitTideLine(g, data.detail || "", 920);
+    g.fillText(data.detail || "", 540, 1008);
+
+    g.fillStyle = "#7fd4cb";
+    g.font = '700 28px Outfit, "Segoe UI", sans-serif';
+    g.fillText("#Tidehunt    #beatmyscore", 540, 1050);
+
+    return new Promise((resolve) => card.toBlob((blob) => resolve(blob), "image/png"));
+  });
+}
+
 function initTreatHunt(canvas) {
   const ctx = canvas.getContext("2d");
 
@@ -21,6 +152,11 @@ function initTreatHunt(canvas) {
   const bestScoreEl = document.getElementById("best-score");
   const overTitle = document.getElementById("over-title");
   const overBlurb = document.getElementById("over-blurb");
+  const scoreCardEl = document.getElementById("score-card");
+  const scoreNameInput = document.getElementById("score-name");
+  const scoreNote = document.getElementById("score-share-note");
+  const btnShareX = document.getElementById("btn-share-x");
+  const btnDownloadCard = document.getElementById("btn-download-card");
   const touchHint = document.getElementById("touch-hint");
   const btnStart = document.getElementById("btn-start");
   const btnAgain = document.getElementById("btn-again");
@@ -35,6 +171,7 @@ function initTreatHunt(canvas) {
 
   const BEST_KEY = "whaleoween-treat-hunt-best";
   const CHAR_KEY = "whaleoween-treat-hunt-char";
+  const NAME_KEY = "whaleoween-tide-hunt-name";
 
   const CHARACTERS = [
     { id: "lane", name: "The Lane" },
@@ -1804,6 +1941,74 @@ function initTreatHunt(canvas) {
       audio.lose();
     }
     setScreen("over");
+    prepareScoreCard();
+  }
+
+  let scoreBlob = null;
+  let scoreCardUrl = "";
+  let cardPromise = null;
+  let cardGen = 0;
+  let builtName = "";
+  let nameTimer = 0;
+
+  function playerName() {
+    const raw = scoreNameInput ? scoreNameInput.value : "";
+    return raw.replace(/[\u0000-\u001f]/g, "").replace(/\s+/g, " ").trim().slice(0, 24);
+  }
+
+  function cardPayload() {
+    return {
+      score: state.score,
+      title: overTitle.textContent,
+      detail: overBlurb.textContent,
+      name: playerName(),
+    };
+  }
+
+  function ensureScoreCard() {
+    const name = playerName();
+    if (scoreBlob && builtName === name) return Promise.resolve(scoreBlob);
+    if (cardPromise && builtName === name) return cardPromise;
+    return prepareScoreCard();
+  }
+
+  function prepareScoreCard() {
+    const gen = ++cardGen;
+    const payload = cardPayload();
+    const staleUrl = scoreCardUrl;
+    builtName = payload.name;
+    scoreBlob = null;
+    cardPromise = null;
+    if (scoreNote) scoreNote.textContent = "";
+    cardPromise = buildTideCard(payload).then((blob) => {
+      if (gen !== cardGen) return blob;
+      scoreBlob = blob;
+      if (scoreCardEl && blob) {
+        const nextUrl = URL.createObjectURL(blob);
+        scoreCardUrl = nextUrl;
+        scoreCardEl.src = nextUrl;
+        const named = payload.name ? `, ${payload.name}` : "";
+        scoreCardEl.alt = `Tide Hunt score card${named}, ${formatTideScore(state.score)}`;
+        scoreCardEl.hidden = false;
+        if (staleUrl && staleUrl !== nextUrl) URL.revokeObjectURL(staleUrl);
+      }
+      return blob;
+    }).catch(() => {
+      if (scoreNote) scoreNote.textContent = "The score card could not be made.";
+      return null;
+    });
+    return cardPromise;
+  }
+
+  function downloadScoreCard(blob) {
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.download = `tide-hunt-${state.score}.png`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1500);
   }
 
   function startGame() {
@@ -3148,6 +3353,61 @@ function initTreatHunt(canvas) {
 
   btnStart?.addEventListener("click", startGame);
   btnAgain?.addEventListener("click", startGame);
+  btnDownloadCard?.addEventListener("click", () => {
+    ensureScoreCard().then((blob) => {
+      if (blob) downloadScoreCard(blob);
+    });
+  });
+  btnShareX?.addEventListener("click", () => {
+    const go = (blob) => {
+      const text = `${tideScoreText(state.score, playerName())}\n${PLAY_URL}`;
+      const file = blob
+        ? new File([blob], `tide-hunt-${state.score}.png`, { type: "image/png" })
+        : null;
+      if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], text, title: "Tide Hunt" }).then(() => {
+          if (scoreNote) scoreNote.textContent = "";
+        }).catch((err) => {
+          if (err && err.name === "AbortError") return;
+          openScoreOnX();
+        });
+        return;
+      }
+      openScoreOnX();
+    };
+    const publish = (blob) => {
+      if (builtName !== playerName()) ensureScoreCard().then(go);
+      else go(blob);
+    };
+    if (scoreBlob && builtName === playerName()) go(scoreBlob);
+    else ensureScoreCard().then(publish);
+  });
+
+  function openScoreOnX() {
+    const opened = window.open(tideIntentUrl(state.score, playerName()), "_blank");
+    if (opened) opened.opener = null;
+    const tell = (copied) => {
+      if (!scoreNote) return;
+      if (!opened) {
+        scoreNote.textContent = copied
+          ? "Pop-up blocked. The card is copied. Open X and paste it."
+          : "Pop-up blocked. Download the card, then open X.";
+        return;
+      }
+      scoreNote.textContent = copied
+        ? "X is open. Paste the card into the post."
+        : "X is open. Download the card and add it to the post.";
+    };
+    const copyBlob = (blob) => {
+      if (!blob || !navigator.clipboard || !window.ClipboardItem) {
+        tell(false);
+        return;
+      }
+      navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]).then(() => tell(true)).catch(() => tell(false));
+    };
+    if (scoreBlob) copyBlob(scoreBlob);
+    else ensureScoreCard().then(copyBlob);
+  }
   btnResume?.addEventListener("click", togglePause);
   btnPause?.addEventListener("click", (e) => {
     e.preventDefault();
@@ -3179,7 +3439,22 @@ function initTreatHunt(canvas) {
     cycleQualityMode();
   });
 
+  if (scoreNameInput) {
+    try {
+      const savedName = localStorage.getItem(NAME_KEY);
+      if (savedName) scoreNameInput.value = savedName.slice(0, 24);
+    } catch { /* keep the field empty */ }
+    scoreNameInput.addEventListener("input", () => {
+      try { localStorage.setItem(NAME_KEY, playerName()); } catch { /* ignore */ }
+      clearTimeout(nameTimer);
+      nameTimer = setTimeout(() => {
+        if (overlay.dataset.screen === "over") prepareScoreCard();
+      }, 250);
+    });
+  }
+
   window.addEventListener("keydown", (e) => {
+    if (e.target && e.target.closest && e.target.closest("input, textarea")) return;
     const gameKeys = ["ArrowLeft", "ArrowRight", "a", "A", "d", "D", " ", "Spacebar", "Escape"];
     if (!gameKeys.includes(e.key)) return;
 
