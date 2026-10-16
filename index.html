@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Whaleoween — $WHALEOWEEN</title>
   <meta name="description" content="Whaleoween is a Halloween memecoin on Solana. Ticker $WHALEOWEEN.">
-  <meta name="theme-color" content="#07141c">
+  <meta name="theme-color" content="#0b1020">
   <meta name="color-scheme" content="dark">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="format-detection" content="telephone=no">
@@ -15,29 +15,36 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,460&family=Outfit:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #07141c;
-      --cream: #e7f6f4;
-      --muted: #8fadb3;
-      --gold: #7fd4cb;
-      --ember: #e8843a;
-      --ink: #062027;
-      --line: rgba(127, 212, 203, 0.22);
+      --bg: #070b16;
+      --cream: #f3fbff;
+      --muted: #c5e7f4;
+      --gold: #5ef0e4;
+      --ember: #ff8a1e;
+      --ink: #140804;
+      --line: rgba(94, 240, 228, 0.42);
       --pad: max(20px, env(safe-area-inset-left));
       --pad-r: max(20px, env(safe-area-inset-right));
     }
     *, *::before, *::after { box-sizing: border-box; }
-    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; background: var(--bg); }
     body {
       margin: 0;
-      background:
-        radial-gradient(820px 440px at 50% -12%, rgba(127, 212, 203, 0.16), transparent 58%),
-        radial-gradient(520px 360px at 100% 8%, rgba(232, 132, 58, 0.1), transparent 55%),
-        var(--bg);
+      background: transparent;
       color: var(--cream);
       font-family: Outfit, "Segoe UI", sans-serif;
       font-size: 17px;
       line-height: 1.5;
       -webkit-font-smoothing: antialiased;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background:
+        linear-gradient(180deg, rgba(5, 8, 18, 0.16) 0%, rgba(5, 8, 18, 0.04) 40%, rgba(5, 8, 18, 0.3) 100%),
+        url("assets/main-bg.jpg") center center / cover no-repeat;
+      pointer-events: none;
     }
     img { width: 100%; max-width: 100%; height: auto; display: block; background: #000; }
     figure { margin: 0; min-width: 0; }
@@ -73,8 +80,9 @@
       justify-content: space-between;
       gap: 16px 24px;
       padding: max(14px, env(safe-area-inset-top)) 0 14px;
-      background: rgba(7, 20, 28, 0.9);
+      background: rgba(7, 11, 22, 0.62);
       border-bottom: 1px solid var(--line);
+      box-shadow: 0 8px 28px rgba(255, 122, 26, 0.08);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
     }
@@ -90,13 +98,30 @@
       text-transform: uppercase;
       text-decoration: none;
     }
-    .brand img {
+    .brand img.brand-mark {
       width: 36px;
       height: 36px;
       max-width: 36px;
       border: 1px solid var(--line);
       flex: 0 0 auto;
       object-fit: contain;
+      background: transparent;
+    }
+    .brand-word {
+      width: auto;
+      height: 34px;
+      max-width: min(240px, 52vw);
+      object-fit: contain;
+      object-position: left center;
+      background: transparent;
+    }
+    .wordmark {
+      margin: 12px auto 0;
+      width: min(920px, 100%);
+    }
+    .wordmark img {
+      width: 100%;
+      height: auto;
       background: transparent;
     }
     .nav, .hero-actions, .dock { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
@@ -130,26 +155,36 @@
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
     }
-    .btn:hover { border-color: var(--cream); }
-    .btn:active { background: rgba(231, 246, 244, 0.08); }
+    .btn:hover { border-color: var(--gold); color: #fff; }
+    .btn:active { background: rgba(94, 240, 228, 0.12); }
     .btn-solid, .dock .btn {
-      background: #c9f4ee;
-      border-color: #c9f4ee;
+      background: var(--ember);
+      border-color: #ffc27a;
       color: var(--ink);
       font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       font-size: 13px;
+      box-shadow: 0 0 22px rgba(255, 138, 30, 0.45);
     }
-    .btn-solid:hover, .dock .btn:hover { background: #e9fffc; border-color: #e9fffc; }
+    .btn-solid:hover, .dock .btn:hover { background: #ffb15a; border-color: #ffe0b0; color: var(--ink); }
     .hero-actions { justify-content: center; margin-top: 28px; }
+    .hero-actions .btn:not(.btn-solid) {
+      border-color: var(--gold);
+      color: #042226;
+      background: var(--gold);
+      font-weight: 700;
+      box-shadow: 0 0 22px rgba(94, 240, 228, 0.4);
+    }
+    .hero-actions .btn:not(.btn-solid):hover {
+      background: #b8fff8;
+      border-color: #e8fffc;
+      color: #042226;
+    }
     .hero {
       padding: 56px 0 20px;
       text-align: center;
-    }
-    .portrait {
-      margin: 48px 0 0;
-      border: 1px solid var(--line);
+      background: radial-gradient(ellipse 62% 48% at 50% 36%, rgba(5, 8, 18, 0.48), transparent 72%);
     }
     .kicker, .ticker {
       margin: 0;
@@ -174,22 +209,7 @@
       height: 7px;
       border-radius: 50%;
       background: var(--ember);
-      box-shadow: 0 0 0 4px rgba(232, 132, 58, 0.22);
-    }
-    h1 {
-      margin: 18px auto 0;
-      max-width: 16ch;
-      font-family: Outfit, "Segoe UI", sans-serif;
-      font-weight: 700;
-      font-size: clamp(44px, 7.4vw, 92px);
-      line-height: 0.92;
-      letter-spacing: -0.045em;
-      text-transform: uppercase;
-      text-wrap: balance;
-      background: linear-gradient(180deg, #f4fffd 10%, #8fe3db 62%, #e8843a 130%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+      box-shadow: 0 0 0 5px rgba(255, 138, 30, 0.28), 0 0 16px rgba(255, 138, 30, 0.8);
     }
     .ca {
       display: grid;
@@ -199,7 +219,8 @@
       margin: 28px auto 0;
       padding: 12px 14px;
       border: 1px solid var(--line);
-      background: transparent;
+      background: rgba(7, 12, 24, 0.72);
+      box-shadow: 0 0 24px rgba(94, 240, 228, 0.08);
       color: inherit;
       text-align: left;
       cursor: pointer;
@@ -237,7 +258,8 @@
       height: min(70vh, 620px);
       min-height: 460px;
       border: 1px solid var(--line);
-      background: #0c2430;
+      background: rgba(8, 16, 32, 0.82);
+      box-shadow: 0 0 36px rgba(255, 138, 30, 0.16);
     }
     .chart-frame iframe {
       position: absolute;
@@ -297,7 +319,8 @@
       margin: 0 auto;
       padding: 22px;
       border: 1px solid var(--line);
-      background: rgba(6, 32, 39, 0.45);
+      background: rgba(7, 12, 24, 0.78);
+      box-shadow: 0 0 36px rgba(94, 240, 228, 0.1), 0 0 48px rgba(255, 138, 30, 0.08);
     }
     .sleeve {
       margin: 0;
@@ -343,10 +366,11 @@
       min-width: 108px;
       min-height: 48px;
       padding: 0 22px;
-      border: 1px solid #c9f4ee;
+      border: 1px solid #ffc27a;
       border-radius: 999px;
-      background: #c9f4ee;
+      background: var(--ember);
       color: var(--ink);
+      box-shadow: 0 0 18px rgba(255, 138, 30, 0.4);
       font-family: inherit;
       font-size: 13px;
       font-weight: 700;
@@ -356,7 +380,7 @@
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
     }
-    .play-toggle:hover { background: #e9fffc; border-color: #e9fffc; }
+    .play-toggle:hover { background: #ffb15a; border-color: #ffe0b0; }
     .now-time {
       margin: 0;
       color: var(--cream);
@@ -457,13 +481,17 @@
       text-transform: uppercase;
       text-align: center;
       color: var(--cream);
+      text-shadow: 0 4px 18px rgba(0, 0, 0, 0.55);
     }
     .frames {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 14px;
     }
-    .frames figure { border: 1px solid var(--line); }
+    .frames figure {
+      border: 1px solid var(--line);
+      box-shadow: 0 0 24px rgba(255, 138, 30, 0.16);
+    }
     .swipe { display: none; }
     footer {
       border-top: 1px solid var(--line);
@@ -481,7 +509,6 @@
     @media (max-width: 800px) {
       .nav, .header-cta { display: none; }
       .hero { padding: 28px 0 12px; }
-      h1 { font-size: clamp(40px, 12vw, 64px); }
       .swipe {
         display: block;
         margin: 0 0 10px;
@@ -519,7 +546,7 @@
         bottom: 0;
         z-index: 6;
         padding: 10px var(--pad-r) calc(10px + env(safe-area-inset-bottom)) var(--pad);
-        background: rgba(7, 20, 28, 0.94);
+        background: rgba(7, 11, 22, 0.82);
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
         border-top: 1px solid var(--line);
@@ -542,7 +569,6 @@
     }
     @media (max-width: 360px) {
       .dock .btn { font-size: 12px; letter-spacing: 0; }
-      h1 { font-size: 36px; }
     }
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
@@ -553,7 +579,7 @@
 <body>
   <div class="page">
     <header>
-      <a class="brand" href="./"><img src="assets/mark.jpg" width="600" height="600" alt="">Whaleoween</a>
+      <a class="brand" href="./"><img class="brand-mark" src="assets/mark.jpg" width="600" height="600" alt=""><img class="brand-word" src="assets/wordmark.png" alt="Whaleoween"></a>
       <nav class="nav" aria-label="Whaleoween links">
         <a class="nav-link" href="play/">Play</a>
         <a class="nav-link" href="#night">The night</a>
@@ -567,7 +593,7 @@
     <main>
       <section class="hero">
         <p class="kicker"><span class="pulse" aria-hidden="true"></span>Solana · The long night</p>
-        <h1>The whale who keeps Halloween</h1>
+        <h1 class="wordmark"><img src="assets/wordmark.png" alt="Whaleoween"></h1>
         <p class="lede">A memecoin for the long night. Candy in the bucket. A vigil under the moon.</p>
         <div class="hero-actions">
           <a class="btn btn-solid" href="https://dexscreener.com/solana/9hv1i7xafDRDV6nEWtFZvqWYN19m6GThc2dSnZaEpump" target="_blank" rel="noopener noreferrer">Find $WHALEOWEEN<span class="sr"> (opens in a new tab)</span></a>
@@ -577,9 +603,6 @@
           <span class="ca-label" id="ca-label">Contract</span>
           <code>9hv1i7xafDRDV6nEWtFZvqWYN19m6GThc2dSnZaEpump</code>
         </button>
-        <figure class="portrait">
-          <img src="assets/street.jpg" width="1168" height="784" alt="A small grey whale in a brown fedora and a torn red-and-green striped sweater walks a wet Halloween street, holding a pumpkin bucket of candy, with a metal claw on the other hand.">
-        </figure>
       </section>
       <section class="gallery" id="night" aria-label="Selected frames">
         <h2>The night</h2>

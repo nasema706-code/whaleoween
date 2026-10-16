@@ -1,12 +1,12 @@
 :root {
-  --bg: #07141c;
-  --fg: #e7f6f4;
-  --cream: #e7f6f4;
-  --muted: #8fadb3;
-  --gold: #7fd4cb;
-  --accent: #e8843a;
-  --ink: #062027;
-  --line: rgba(127, 212, 203, 0.22);
+  --bg: #070b16;
+  --fg: #f3fbff;
+  --cream: #f3fbff;
+  --muted: #c5e7f4;
+  --gold: #5ef0e4;
+  --accent: #ff8a1e;
+  --ink: #140804;
+  --line: rgba(94, 240, 228, 0.42);
   --pumpkin: #e07a22;
   --candy: #f0d7a2;
   --curse: #d45b6a;
@@ -22,19 +22,27 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  background: var(--bg);
 }
 
 body {
   margin: 0;
-  background:
-    radial-gradient(820px 440px at 50% -12%, rgba(127, 212, 203, 0.16), transparent 58%),
-    radial-gradient(520px 360px at 100% 8%, rgba(232, 132, 58, 0.1), transparent 55%),
-    var(--bg);
+  background: transparent;
   color: var(--cream);
   font-family: var(--font-body);
   font-size: 17px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(180deg, rgba(5, 8, 18, 0.22) 0%, rgba(5, 8, 18, 0.08) 42%, rgba(5, 8, 18, 0.34) 100%),
+    url("../assets/main-bg.jpg") center center / cover no-repeat;
+  pointer-events: none;
 }
 
 a { color: inherit; }
@@ -92,7 +100,7 @@ header {
   text-decoration: none;
   color: inherit;
 }
-.brand img {
+.brand img.brand-mark {
   width: 40px;
   height: 40px;
   max-width: 40px;
@@ -100,6 +108,15 @@ header {
   object-fit: contain;
   background: transparent;
   border: 1px solid var(--line);
+}
+.brand-word {
+  width: auto;
+  height: 36px;
+  max-width: min(240px, 52vw);
+  object-fit: contain;
+  object-position: left center;
+  background: transparent;
+  border: 0;
 }
 
 .nav { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -625,7 +642,8 @@ footer p { margin: 0; max-width: 46rem; overflow-wrap: anywhere; }
     padding-bottom: 8px;
   }
   .brand { font-size: 12px; letter-spacing: 0.08em; }
-  .brand img { width: 32px; height: 32px; max-width: 32px; }
+  .brand img.brand-mark { width: 32px; height: 32px; max-width: 32px; }
+  .brand-word { height: 30px; }
   .nav { flex-wrap: nowrap; gap: 4px; }
   main {
     display: flex;
