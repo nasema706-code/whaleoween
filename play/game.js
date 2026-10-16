@@ -3,17 +3,12 @@ if (canvas) {
   initTreatHunt(canvas);
 }
 
-const PLAY_URL = "https://whaleoween.netlify.app/play/";
+const X_PAGE = "https://x.com/i/communities/2011205966444847116";
 let tideMark = null;
 
 function tideScoreText(score, name) {
   const who = name ? `${name} scored` : "I scored";
   return `${who} ${score} in Tide Hunt #Tidehunt #beatmyscore`;
-}
-
-function tideIntentUrl(score, name) {
-  const text = `${tideScoreText(score, name)}\n${PLAY_URL}`;
-  return `https://x.com/intent/tweet?text=${encodeURIComponent(text)}`;
 }
 
 function formatTideScore(score) {
@@ -3359,20 +3354,7 @@ function initTreatHunt(canvas) {
     });
   });
   btnShareX?.addEventListener("click", () => {
-    const go = (blob) => {
-      const text = `${tideScoreText(state.score, playerName())}\n${PLAY_URL}`;
-      const file = blob
-        ? new File([blob], `tide-hunt-${state.score}.png`, { type: "image/png" })
-        : null;
-      if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
-        navigator.share({ files: [file], text, title: "Tide Hunt" }).then(() => {
-          if (scoreNote) scoreNote.textContent = "";
-        }).catch((err) => {
-          if (err && err.name === "AbortError") return;
-          openScoreOnX();
-        });
-        return;
-      }
+    const go = () => {
       openScoreOnX();
     };
     const publish = (blob) => {
@@ -3384,19 +3366,19 @@ function initTreatHunt(canvas) {
   });
 
   function openScoreOnX() {
-    const opened = window.open(tideIntentUrl(state.score, playerName()), "_blank");
+    const opened = window.open(X_PAGE, "_blank");
     if (opened) opened.opener = null;
     const tell = (copied) => {
       if (!scoreNote) return;
       if (!opened) {
         scoreNote.textContent = copied
-          ? "Pop-up blocked. The card is copied. Open X and paste it."
-          : "Pop-up blocked. Download the card, then open X.";
+          ? "Pop-up blocked. The card is copied. Open Whaleoween on X and paste it."
+          : "Pop-up blocked. Download the card, then open Whaleoween on X.";
         return;
       }
       scoreNote.textContent = copied
-        ? "X is open. Paste the card into the post."
-        : "X is open. Download the card and add it to the post.";
+        ? "Whaleoween on X is open. Paste the card into your post."
+        : "Whaleoween on X is open. Download the card and add it to your post.";
     };
     const copyBlob = (blob) => {
       if (!blob || !navigator.clipboard || !window.ClipboardItem) {
