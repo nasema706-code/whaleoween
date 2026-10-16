@@ -29,6 +29,7 @@
         <div class="section-head">
           <p class="eyebrow">Play</p>
           <h1>Tide Hunt</h1>
+          <p class="device-best">Best on this device <span data-best>—</span> <span class="device-best-new" data-best-note hidden>New best</span></p>
           <p>Four worlds, five levels, from the harbor to the wreck. Catch the candy. Clear a tide and slash the flying haul.</p>
         </div>
         <div class="game-shell">
@@ -65,18 +66,8 @@
                 <p class="game-brand">$WHALEOWEEN</p>
                 <h2 id="over-title">Dawn almost</h2>
                 <p class="game-scoreline">Score <span id="final-score">0</span></p>
-                <p class="game-best">Best <span id="best-score">0</span></p>
+                <p class="game-best">Best <span id="best-score" data-best>—</span></p>
                 <p class="game-lede" id="over-blurb">The lane will remember.</p>
-                <img class="score-card" id="score-card" alt="" hidden>
-                <label class="score-name">
-                  <span class="sr">Your name on the score card</span>
-                  <input id="score-name" type="text" name="player" maxlength="24" placeholder="Add your name" autocomplete="nickname" enterkeyhint="done" spellcheck="false">
-                </label>
-                <div class="score-share">
-                  <button class="btn" type="button" id="btn-share-x">Share on X</button>
-                  <button class="btn btn-ghost" type="button" id="btn-download-card">Download card</button>
-                </div>
-                <p class="score-share-note" id="score-share-note" aria-live="polite"></p>
                 <button class="btn" type="button" id="btn-again">Play again</button>
               </div>
             </div>
@@ -106,14 +97,28 @@
                 <span class="game-hud-value game-hud-power-val" id="hud-power">—</span>
               </div>
             </div>
-            <button class="game-pause-btn" type="button" id="btn-pause" hidden>Pause</button>
             <button class="game-quality" type="button" id="btn-quality" aria-label="Graphics quality">Auto</button>
           </div>
-          <div class="game-audio">
-            <button class="game-mute" type="button" id="btn-mute" aria-pressed="false">Sound On</button>
-            <button class="game-music" type="button" id="btn-music" aria-pressed="false">Music Off</button>
+          <div class="game-dock">
+            <button class="game-pause-btn" type="button" id="btn-pause" hidden>Pause</button>
+            <div class="game-audio">
+              <button class="game-mute" type="button" id="btn-mute" aria-pressed="false">Sound On</button>
+              <button class="game-music" type="button" id="btn-music" aria-pressed="false">Music Off</button>
+            </div>
           </div>
           <p class="game-touch-hint" id="touch-hint" hidden>Slide to steer. The whale follows your finger.</p>
+          <section class="score-share-panel" id="score-share-panel" hidden>
+            <img class="score-card" id="score-card" alt="" hidden>
+            <p class="device-best device-best-share">Best on this device <span data-best>—</span> <span class="device-best-new" data-best-note hidden>New best</span></p>
+            <label class="score-name" for="score-name">Your name</label>
+            <input id="score-name" type="text" name="player" maxlength="24" placeholder="Add your name" autocomplete="nickname" enterkeyhint="done" spellcheck="false">
+            <p class="score-tags">#Whaleoween #Tidehunt #beatmyscore</p>
+            <div class="score-share">
+              <button class="btn" type="button" id="btn-share-x">Share on X</button>
+              <button class="btn btn-ghost" type="button" id="btn-download-card">Download card</button>
+            </div>
+            <p class="score-share-note" id="score-share-note" aria-live="polite"></p>
+          </section>
         </div>
       </section>
     </main>

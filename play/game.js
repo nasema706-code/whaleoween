@@ -4,11 +4,12 @@ if (canvas) {
 }
 
 const PLAY_URL = "https://whaleoween.netlify.app/play/";
+const TIDE_TAGS = "#Whaleoween #Tidehunt #beatmyscore";
 let tideMark = null;
 
 function tideScoreText(score, name) {
   const who = name ? `${name} scored` : "I scored";
-  return `${who} ${score} in Tide Hunt #Tidehunt #beatmyscore`;
+  return `${who} ${score} in Tide Hunt ${TIDE_TAGS}`;
 }
 
 function tideComposeUrl(score, name) {
@@ -127,8 +128,13 @@ function buildTideCard(data) {
     g.fillText(data.detail || "", 540, 1008);
 
     g.fillStyle = "#7fd4cb";
-    g.font = '700 28px Outfit, "Segoe UI", sans-serif';
-    g.fillText("#Tidehunt    #beatmyscore", 540, 1050);
+    let tagSize = 26;
+    g.font = `700 ${tagSize}px Outfit, "Segoe UI", sans-serif`;
+    while (tagSize > 16 && g.measureText(TIDE_TAGS).width > 960) {
+      tagSize -= 1;
+      g.font = `700 ${tagSize}px Outfit, "Segoe UI", sans-serif`;
+    }
+    g.fillText(TIDE_TAGS, 540, 1050);
 
     return new Promise((resolve) => card.toBlob((blob) => resolve(blob), "image/png"));
   });
@@ -149,9 +155,9 @@ function initTreatHunt(canvas) {
   const hudLevel = document.getElementById("hud-level");
   const hudPower = document.getElementById("hud-power");
   const finalScore = document.getElementById("final-score");
-  const bestScoreEl = document.getElementById("best-score");
   const overTitle = document.getElementById("over-title");
   const overBlurb = document.getElementById("over-blurb");
+  const scoreSharePanel = document.getElementById("score-share-panel");
   const scoreCardEl = document.getElementById("score-card");
   const scoreNameInput = document.getElementById("score-name");
   const scoreNote = document.getElementById("score-share-note");
@@ -1295,13 +1301,30 @@ function initTreatHunt(canvas) {
   }
 
   function getBest() {
-    return Number(localStorage.getItem(BEST_KEY) || 0) || 0;
+    try {
+      return Number(localStorage.getItem(BEST_KEY) || 0) || 0;
+    } catch {
+      return 0;
+    }
   }
 
   function setBest(score) {
-    const best = Math.max(getBest(), score);
-    localStorage.setItem(BEST_KEY, String(best));
-    return best;
+    const previous = getBest();
+    const best = Math.max(previous, score);
+    try {
+      localStorage.setItem(BEST_KEY, String(best));
+    } catch { /* still show the number for this visit */ }
+    return { best, isNew: score > previous };
+  }
+
+  function paintBest(best, isNew) {
+    const text = best > 0 ? formatTideScore(best) : "—";
+    document.querySelectorAll("[data-best]").forEach((el) => {
+      el.textContent = text;
+    });
+    document.querySelectorAll("[data-best-note]").forEach((el) => {
+      el.hidden = !isNew;
+    });
   }
 
   function syncMuteButton() {
@@ -1365,6 +1388,15 @@ function initTreatHunt(canvas) {
     if (touchHint) {
       touchHint.hidden =
         name !== "playing" || window.matchMedia("(pointer: fine)").matches;
+    }
+    if (scoreSharePanel) {
+      scoreSharePanel.hidden = name !== "over";
+      if (name === "over") {
+        const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        window.setTimeout(() => {
+          scoreSharePanel.scrollIntoView({ block: "nearest", behavior: reduce ? "auto" : "smooth" });
+        }, 80);
+      }
     }
   }
 
@@ -1915,9 +1947,9 @@ function initTreatHunt(canvas) {
     paused = false;
     cancelAnimationFrame(rafId);
     audio.stopMusic();
-    finalScore.textContent = String(state.score);
-    const best = setBest(state.score);
-    if (bestScoreEl) bestScoreEl.textContent = String(best);
+    finalScore.textContent = formatTideScore(state.score);
+    const saved = setBest(state.score);
+    paintBest(saved.best, saved.isNew);
 
     if (state.lives <= 0) {
       overTitle.textContent = "The night wins";
@@ -3540,7 +3572,7 @@ function initTreatHunt(canvas) {
   syncQualityButton();
   buildCharacterPicker();
   setCharacter("lane");
-  if (bestScoreEl) bestScoreEl.textContent = String(getBest());
+  paintBest(getBest(), false);
   resizeCanvas(true);
   prewarmAssets();
   drawScene();
