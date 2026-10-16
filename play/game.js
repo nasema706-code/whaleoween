@@ -46,9 +46,10 @@ function initTreatHunt(canvas) {
   const LEVELS = [
     {
       id: 1,
-      name: "The Lane",
-      blurb: "Candy in the bucket.",
-      theme: "candy",
+      world: "The Harbor",
+      name: "The Watch",
+      blurb: "Ships under a teal moon.",
+      theme: "harbor",
       duration: 40,
       spawn: 0.92,
       gravity: 175,
@@ -60,9 +61,10 @@ function initTreatHunt(canvas) {
     },
     {
       id: 2,
-      name: "The Porch",
-      blurb: "The robe keeps still.",
-      theme: "pumpkin",
+      world: "The Harbor",
+      name: "The Breach",
+      blurb: "The great whale clears the water.",
+      theme: "breach",
       duration: 42,
       spawn: 0.78,
       gravity: 195,
@@ -75,9 +77,10 @@ function initTreatHunt(canvas) {
     },
     {
       id: 3,
-      name: "The Mask",
-      blurb: "Two hoods. One moon.",
-      theme: "alley",
+      world: "The Fleet",
+      name: "The Rise",
+      blurb: "A tail against the harvest moon.",
+      theme: "fleet",
       duration: 44,
       spawn: 0.64,
       gravity: 225,
@@ -89,9 +92,10 @@ function initTreatHunt(canvas) {
     },
     {
       id: 4,
-      name: "The Balloon",
-      blurb: "Red against the fog.",
-      theme: "grave",
+      world: "The Cloak",
+      name: "The Light",
+      blurb: "The hood, the lighthouse, the bats.",
+      theme: "cloak",
       duration: 48,
       spawn: 0.52,
       gravity: 260,
@@ -103,9 +107,10 @@ function initTreatHunt(canvas) {
     },
     {
       id: 5,
-      name: "The Hook",
-      blurb: "Bees at the end of the lane.",
-      theme: "haunt",
+      world: "The Deep",
+      name: "The Wreck",
+      blurb: "Pumpkins glow on the seabed.",
+      theme: "deep",
       duration: 52,
       spawn: 0.42,
       gravity: 285,
@@ -347,6 +352,7 @@ function initTreatHunt(canvas) {
     doubleT: 0,
     levelsCleared: 0,
     hurtThisLevel: false,
+    bonus: null,
     player: {
       x: 0,
       y: 0,
@@ -386,24 +392,31 @@ function initTreatHunt(canvas) {
     let master = null;
     let musicBus = null;
     let musicTimer = null;
-    let songBuffer = null;
     let songGain = null;
     let songGen = 0;
     let songSources = [];
-    // Chorus hooks from Whale-o-ween, the phrases that repeat and peak.
-    const HOOKS = [
-      { start: 114.7, end: 130.7 },
-      { start: 143.4, end: 159.4 },
-      { start: 163.9, end: 179.9 },
-      { start: 168.0, end: 184.0 },
-      { start: 180.2, end: 196.2 },
+    // Original night-hunt loop in D minor. Layers come in as the worlds get deeper.
+    const MELODY = [
+      [0, 0, 0, 2], [0, 2, 3, 1], [0, 3, 7, 1], [0, 4, 3, 2], [0, 6, 2, 1], [0, 7, 0, 1],
+      [1, 0, 7, 2], [1, 2, 5, 1], [1, 3, 3, 1], [1, 4, 2, 2], [1, 6, 0, 2],
+      [2, 0, 8, 2], [2, 2, 7, 1], [2, 3, 5, 1], [2, 4, 3, 2], [2, 6, 7, 2],
+      [3, 0, 5, 1], [3, 1, 3, 1], [3, 2, 2, 2], [3, 4, 0, 2], [3, 6, -2, 1], [3, 7, 0, 1],
+      [4, 0, 12, 2], [4, 2, 10, 1], [4, 3, 8, 1], [4, 4, 7, 2], [4, 6, 5, 2],
+      [5, 0, 3, 2], [5, 2, 5, 1], [5, 3, 7, 1], [5, 4, 8, 2], [5, 6, 7, 2],
+      [6, 0, 10, 2], [6, 2, 8, 1], [6, 3, 7, 1], [6, 4, 5, 2], [6, 6, 3, 2],
+      [7, 0, 2, 1], [7, 1, 3, 1], [7, 2, 2, 1], [7, 3, 0, 1], [7, 4, -2, 2], [7, 6, 0, 2],
     ];
-    const songBytesPromise = fetch(new URL("../assets/whale-o-ween.mp3", document.baseURI))
-      .then((response) => {
-        if (!response.ok) throw new Error("song");
-        return response.arrayBuffer();
-      })
-      .catch(() => null);
+    const BASS = [73.42, 73.42, 116.54, 87.31, 98.0, 116.54, 130.81, 110.0];
+    const CHAINS = [
+      [146.83, 174.61, 220],
+      [146.83, 174.61, 220],
+      [233.08, 293.66, 349.23],
+      [174.61, 220, 261.63],
+      [196, 233.08, 293.66],
+      [233.08, 293.66, 349.23],
+      [261.63, 329.63, 392],
+      [220, 261.63, 329.63],
+    ];
 
     function ensure() {
       if (!actx) {
@@ -592,18 +605,12 @@ function initTreatHunt(canvas) {
         if (!musicOn) return;
         if (musicTimer && !force) return;
         this.stopMusic();
-        const hook = HOOKS[Math.max(0, Math.min(state.levelIndex, HOOKS.length - 1))];
         const gen = songGen;
+        const level = Math.max(0, Math.min(state.levelIndex, 4));
 
         const arm = async () => {
           const ac = await resumeCtx();
           if (!ac || gen !== songGen || !musicOn || !running || paused) return;
-          if (!songBuffer) {
-            const bytes = await songBytesPromise;
-            if (!bytes || gen !== songGen || !musicOn || !running || paused) return;
-            songBuffer = await ac.decodeAudioData(bytes.slice(0));
-          }
-          if (gen !== songGen || !musicOn || !running || paused || !songBuffer) return;
 
           if (!songGain) {
             songGain = ac.createGain();
@@ -612,39 +619,109 @@ function initTreatHunt(canvas) {
           }
           const now = ac.currentTime;
           songGain.gain.cancelScheduledValues(now);
-          songGain.gain.setValueAtTime(0.0001, now);
-          songGain.gain.linearRampToValueAtTime(0.28, now + 0.4);
+          songGain.gain.setValueAtTime(Math.max(0.0001, songGain.gain.value), now);
+          songGain.gain.linearRampToValueAtTime(1, now + 0.45);
 
-          const dur = hook.end - hook.start;
-          const fade = 0.2;
-          let nextAt = now + 0.05;
+          const tempo = [92, 96, 104, 100, 86][level];
+          const eighth = 60 / tempo / 2;
+          const bar = eighth * 8;
+          const loop = bar * 8;
+          const deep = level >= 4;
+          const note = (semi) => 293.66 * Math.pow(2, semi / 12);
 
+          const voice = (freq, dur, type, gain, when, opts = {}) => {
+            if (gen !== songGen || !songGain || freq <= 0) return;
+            const osc = ac.createOscillator();
+            const filter = ac.createBiquadFilter();
+            const g = ac.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, when);
+            if (opts.slide) {
+              osc.frequency.exponentialRampToValueAtTime(Math.max(30, opts.slide), when + dur);
+            }
+            filter.type = "lowpass";
+            filter.frequency.setValueAtTime(opts.cut || (deep ? 900 : 2200), when);
+            g.gain.setValueAtTime(0.0001, when);
+            g.gain.exponentialRampToValueAtTime(Math.max(0.0001, gain), when + (opts.attack || 0.02));
+            g.gain.exponentialRampToValueAtTime(0.0001, when + Math.max(0.06, dur));
+            osc.connect(filter);
+            filter.connect(g);
+            g.connect(songGain);
+            osc.start(when);
+            osc.stop(when + dur + 0.05);
+            osc.onended = () => {
+              songSources = songSources.filter((item) => item !== osc);
+            };
+            songSources.push(osc);
+          };
+
+          const hat = (when) => {
+            if (gen !== songGen || !songGain) return;
+            const dur = 0.035;
+            const len = Math.max(1, Math.floor(ac.sampleRate * dur));
+            const buffer = ac.createBuffer(1, len, ac.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+            const src = ac.createBufferSource();
+            const filter = ac.createBiquadFilter();
+            const g = ac.createGain();
+            filter.type = "highpass";
+            filter.frequency.value = 6000;
+            g.gain.setValueAtTime(0.045, when);
+            g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+            src.buffer = buffer;
+            src.connect(filter);
+            filter.connect(g);
+            g.connect(songGain);
+            src.start(when);
+            src.stop(when + dur + 0.02);
+            songSources.push(src);
+          };
+
+          const playLoop = (origin) => {
+            for (let i = 0; i < 8; i++) {
+              const t = origin + i * bar;
+              voice(BASS[i], bar * 0.92, "triangle", deep ? 0.2 : 0.15, t, {
+                cut: 240,
+                attack: 0.03,
+                slide: BASS[i] * 0.97,
+              });
+              for (const freq of CHAINS[i]) {
+                voice(freq, bar * 0.96, "sine", 0.035, t, { cut: deep ? 700 : 1400, attack: 0.18 });
+              }
+              if (level >= 1 && (i % 2 === 0 || !deep)) {
+                voice(148, 0.11, "sine", 0.2, t, { slide: 46, cut: 360, attack: 0.004 });
+                if (!deep) voice(148, 0.09, "sine", 0.12, t + eighth * 4, { slide: 50, cut: 320, attack: 0.004 });
+              }
+              if (level >= 2 && !deep) {
+                hat(t + eighth * 2);
+                hat(t + eighth * 6);
+              }
+            }
+            for (const [b, step, semi, steps] of MELODY) {
+              const t = origin + b * bar + step * eighth;
+              const dur = steps * eighth * 0.9;
+              const freq = note(semi);
+              voice(freq, dur, "sine", 0.1, t, { cut: deep ? 1100 : 2800, attack: 0.012 });
+              voice(freq * 2, dur * 0.55, "triangle", 0.028, t, { cut: 3200, attack: 0.008 });
+              if (level >= 3) {
+                voice(freq * 2, dur * 0.4, "sine", 0.02, t + 0.03, { cut: 2400, attack: 0.01 });
+              }
+            }
+          };
+
+          let origin = now + 0.06;
           const schedule = () => {
-            if (gen !== songGen || !songBuffer) return;
-            while (nextAt < ac.currentTime + 0.75) {
-              const src = ac.createBufferSource();
-              const g = ac.createGain();
-              src.buffer = songBuffer;
-              src.connect(g);
-              g.connect(songGain);
-              const t = nextAt;
-              g.gain.setValueAtTime(0.0001, t);
-              g.gain.linearRampToValueAtTime(1, t + fade);
-              g.gain.setValueAtTime(1, t + Math.max(fade, dur - fade));
-              g.gain.linearRampToValueAtTime(0.0001, t + dur);
-              src.start(t, hook.start, dur);
-              src.stop(t + dur + 0.03);
-              src.onended = () => {
-                songSources = songSources.filter((item) => item !== src);
-              };
-              songSources.push(src);
-              nextAt = t + dur - fade;
+            if (gen !== songGen || !musicOn || !running || paused) return;
+            while (origin < ac.currentTime + 0.7) {
+              playLoop(origin);
+              origin += loop;
             }
           };
 
           schedule();
           if (musicTimer) clearInterval(musicTimer);
-          musicTimer = setInterval(schedule, 200);
+          musicTimer = setInterval(schedule, 180);
         };
 
         arm();
@@ -1001,7 +1078,7 @@ function initTreatHunt(canvas) {
     const { w, h } = logicalSize();
     if (w > 1 && h > 1) {
       for (const lvl of LEVELS) {
-        getBackground(lvl.theme || "candy", w, h);
+        getBackground(lvl.theme || "harbor", w, h);
       }
     }
   }
@@ -1166,11 +1243,12 @@ function initTreatHunt(canvas) {
   function updateHud() {
     const score = String(state.score);
     const lives = "♥".repeat(Math.max(0, state.lives)) || "—";
-    const time = String(Math.ceil(state.timeLeft));
-    const combo = state.combo > 1 ? `x${state.combo}` : "—";
-    const hot = state.combo >= 5;
-    const urgent = state.timeLeft <= 10;
-    const level = `${state.levelIndex + 1}/${LEVELS.length}`;
+    const time = String(Math.ceil(state.bonus ? state.bonus.time : state.timeLeft));
+    const comboSource = state.bonus ? state.bonus.chain : state.combo;
+    const combo = comboSource > 1 ? `x${comboSource}` : "—";
+    const hot = comboSource >= 3;
+    const urgent = state.bonus ? state.bonus.time <= 4 : state.timeLeft <= 10;
+    const level = state.bonus ? "BONUS" : `${state.levelIndex + 1}/${LEVELS.length}`;
     const power = powerLabel();
 
     if (hudCache.score !== score) {
@@ -1222,6 +1300,7 @@ function initTreatHunt(canvas) {
     state.doubleT = 0;
     state.levelsCleared = 0;
     state.hurtThisLevel = false;
+    state.bonus = null;
     state.drops = [];
     state.particles = [];
     state.floaters = [];
@@ -1307,7 +1386,7 @@ function initTreatHunt(canvas) {
   }
 
   function addFloater(x, y, text, color) {
-    const big = /CLEAR|PERFECT|HOT|ONSLAUGHT/.test(text);
+    const big = /CLEAR|PERFECT|HOT|ONSLAUGHT|EPIC|SLASH|LEGEND|BONUS/.test(text);
     state.floaters.push({
       x,
       y,
@@ -1356,30 +1435,62 @@ function initTreatHunt(canvas) {
     audio.power();
   }
 
-  function advanceLevel() {
+  function setTouchHint() {
+    if (!touchHint) return;
+    touchHint.textContent = state.bonus
+      ? "Drag through the haul. Avoid skulls and spiders."
+      : "Slide to steer. The whale follows your finger.";
+  }
+
+  function beginBonus() {
     const cleared = currentLevel();
     state.score += cleared.clearBonus;
     state.levelsCleared += 1;
     addFloater(viewW / 2, viewH * 0.35, `+${cleared.clearBonus} CLEAR`, "#c8f54a");
-
-    // Perfect clear: no curse damage taken this level → bonus life
     if (!state.hurtThisLevel) {
       grantLife(viewW / 2, viewH * 0.42, "PERFECT +1♥");
     }
+    state.drops = [];
+    state.flash = 0.42;
+    state.flashColor = "rgba(232, 132, 58, 0.5)";
+    state.shake = 0.4;
+    state.bonus = {
+      time: 14,
+      banner: 1.45,
+      spawn: 0.05,
+      ending: 0,
+      targets: [],
+      halves: [],
+      trail: [],
+      stroking: false,
+      strokeHits: 0,
+      strokePoints: 0,
+      chain: 0,
+      chainT: 0,
+      scored: 0,
+      epic: "",
+      epicT: 0,
+    };
+    audio.levelUp();
+    setTouchHint();
+    updateHud();
+  }
 
-    state.flash = 0.34;
-    state.flashColor = "rgba(200, 245, 74, 0.42)";
-    state.shake = Math.max(state.shake, 0.24);
-
+  function finishBonus() {
+    if (!state.bonus) return;
+    const scored = state.bonus.scored;
+    state.bonus = null;
+    setTouchHint();
+    if (scored > 0) addFloater(viewW / 2, viewH * 0.32, `+${scored} BONUS`, "#ff7a1a");
+    state.drops = [];
+    state.flash = 0.28;
+    state.flashColor = "rgba(127, 212, 203, 0.35)";
     if (state.levelIndex >= LEVELS.length - 1) {
       endGame(true);
       return;
     }
-
     state.levelIndex += 1;
-    const next = currentLevel();
-    state.timeLeft = next.duration;
-    state.drops = [];
+    state.timeLeft = currentLevel().duration;
     state.hurtThisLevel = false;
     state.levelBanner = 2.4;
     spawnTimer = 0.55;
@@ -1387,6 +1498,278 @@ function initTreatHunt(canvas) {
     nearMissCooldown = 0;
     audio.levelUp();
     if (audio.isMusicOn()) audio.startMusic(true);
+    updateHud();
+  }
+
+  function launchBonusPiece(w, h, x, vxBias) {
+    const bonus = state.bonus;
+    if (!bonus || bonus.targets.length >= 8) return;
+    const badChance = Math.min(0.42, 0.16 + state.levelIndex * 0.055);
+    const roll = Math.random();
+    let kind = "candy";
+    let points = 40;
+    let bad = false;
+    let rare = false;
+    let color = "#ff6b9d";
+    let r = 40 + Math.random() * 10;
+    if (roll < badChance) {
+      bad = true;
+      points = 0;
+      if (Math.random() < 0.5) {
+        kind = "skull";
+        color = "#efe6d8";
+        r = 40 + Math.random() * 10;
+      } else {
+        kind = "spider";
+        color = "#ff4d6d";
+        r = 36 + Math.random() * 8;
+      }
+    } else if (Math.random() < 0.1) {
+      kind = "pumpkin";
+      points = 180;
+      rare = true;
+      color = "#ffe08a";
+      r = 62 + Math.random() * 10;
+    } else if (Math.random() < 0.62) {
+      kind = "pumpkin";
+      points = 80;
+      color = "#ff7a1a";
+      r = 52 + Math.random() * 16;
+    } else if (Math.random() < 0.5) {
+      kind = "lolli";
+      points = 55;
+      color = "#ff8fab";
+      r = 38 + Math.random() * 8;
+    }
+    const rise = h * (0.58 + Math.random() * 0.24);
+    const gravity = 1080;
+    bonus.targets.push({
+      kind,
+      points,
+      bad,
+      rare,
+      color,
+      r,
+      x: Math.max(r + 8, Math.min(w - r - 8, x)),
+      y: h + r * 0.4,
+      vx: vxBias + (Math.random() - 0.5) * 80,
+      vy: -Math.sqrt(2 * gravity * rise),
+      rot: Math.random() * Math.PI,
+      spin: (Math.random() - 0.5) * 3.2,
+      hit: false,
+    });
+  }
+
+  function spawnBonusWave(w, h) {
+    const volley = Math.random() < 0.42 + state.levelIndex * 0.07;
+    const n = volley ? 2 + (Math.random() < 0.35 ? 1 : 0) : 1;
+    const base = w * (0.22 + Math.random() * 0.56);
+    for (let i = 0; i < n; i++) {
+      const spread = (i - (n - 1) / 2);
+      launchBonusPiece(w, h, base + spread * 74, spread * 150);
+    }
+  }
+
+  function distToSegment(px, py, ax, ay, bx, by) {
+    const abx = bx - ax;
+    const aby = by - ay;
+    const len2 = abx * abx + aby * aby || 1;
+    const t = Math.max(0, Math.min(1, ((px - ax) * abx + (py - ay) * aby) / len2));
+    const x = ax + abx * t;
+    const y = ay + aby * t;
+    return Math.hypot(px - x, py - y);
+  }
+
+  function slashSegment(ax, ay, bx, by) {
+    const bonus = state.bonus;
+    if (!bonus) return;
+    for (const target of bonus.targets) {
+      if (target.hit) continue;
+      if (distToSegment(target.x, target.y, ax, ay, bx, by) > target.r) continue;
+      target.hit = true;
+      splitBonusTarget(target, bx - ax, by - ay);
+    }
+  }
+
+  function splitBonusTarget(target, dx, dy) {
+    const bonus = state.bonus;
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = dx / len;
+    const ny = dy / len;
+    const kick = 160;
+    for (const side of [-1, 1]) {
+      bonus.halves.push({
+        kind: target.kind,
+        r: target.r,
+        side,
+        x: target.x,
+        y: target.y,
+        vx: target.vx * 0.3 + nx * kick * side,
+        vy: target.vy * 0.25 - 80 + ny * 40,
+        rot: target.rot,
+        spin: side * 6,
+        life: 0.7,
+        max: 0.7,
+      });
+    }
+    if (target.bad) {
+      bonus.chain = 0;
+      bonus.chainT = 0;
+      bonus.strokeHits = 0;
+      bonus.strokePoints = 0;
+      state.combo = 0;
+      state.hurtThisLevel = true;
+      state.lives -= 1;
+      state.shake = 0.55;
+      state.flash = 0.28;
+      state.flashColor = "rgba(255, 77, 109, 0.55)";
+      burst(target.x, target.y, "#ff4d6d", 26);
+      addFloater(target.x, target.y - 16, "CURSE", "#ff4d6d");
+      audio.curse();
+      updateHud();
+      if (state.lives <= 0) endGame(false);
+      return;
+    }
+    bonus.chain += 1;
+    bonus.chainT = 0.85;
+    bonus.strokeHits += 1;
+    bonus.strokePoints += target.points;
+    state.score += target.points;
+    bonus.scored += target.points;
+    state.maxCombo = Math.max(state.maxCombo, bonus.chain);
+    burst(target.x, target.y, target.color, target.rare ? 32 : 18);
+    addFloater(target.x, target.y - 18, `+${target.points}`, target.color);
+    state.shake = Math.max(state.shake, target.rare ? 0.28 : 0.12);
+    if (target.rare) {
+      state.flash = 0.2;
+      state.flashColor = "rgba(255, 224, 138, 0.45)";
+      audio.star();
+    } else {
+      audio.catch(target.points, bonus.chain);
+    }
+    updateHud();
+  }
+
+  function beginSlash(point) {
+    const bonus = state.bonus;
+    if (!bonus) return;
+    bonus.stroking = true;
+    bonus.strokeHits = 0;
+    bonus.strokePoints = 0;
+    bonus.trail = [{ x: point.x, y: point.y, life: 0.22 }];
+  }
+
+  function extendSlash(point) {
+    const bonus = state.bonus;
+    if (!bonus || !bonus.stroking) return;
+    const trail = bonus.trail;
+    const last = trail[trail.length - 1];
+    if (!last) {
+      trail.push({ x: point.x, y: point.y, life: 0.22 });
+      return;
+    }
+    if (Math.hypot(point.x - last.x, point.y - last.y) < 9) return;
+    slashSegment(last.x, last.y, point.x, point.y);
+    trail.push({ x: point.x, y: point.y, life: 0.22 });
+    if (trail.length > 18) trail.shift();
+  }
+
+  function endSlash() {
+    const bonus = state.bonus;
+    if (!bonus || !bonus.stroking) return;
+    bonus.stroking = false;
+    const hits = bonus.strokeHits;
+    if (hits >= 3 && bonus.strokePoints > 0) {
+      const extraMul = hits >= 5 ? 3 : hits >= 4 ? 2 : 1;
+      const extra = bonus.strokePoints * extraMul;
+      state.score += extra;
+      bonus.scored += extra;
+      const label = hits >= 5 ? "LEGEND" : hits >= 4 ? "EPIC" : "SLASH";
+      bonus.epic = label;
+      bonus.epicT = 0.9;
+      addFloater(viewW / 2, viewH * 0.4, `${label} +${extra}`, "#ffe08a");
+      state.flash = 0.34;
+      state.flashColor = "rgba(255, 180, 70, 0.5)";
+      state.shake = Math.max(state.shake, 0.45);
+      audio.star();
+      updateHud();
+    }
+    bonus.strokeHits = 0;
+    bonus.strokePoints = 0;
+  }
+
+  function updateBonus(dt) {
+    const bonus = state.bonus;
+    if (!bonus) return;
+    const { w, h } = logicalSize();
+    const gravity = 1080;
+
+    if (bonus.banner > 0) bonus.banner = Math.max(0, bonus.banner - dt);
+    bonus.chainT = Math.max(0, bonus.chainT - dt);
+    if (bonus.chainT <= 0) bonus.chain = 0;
+    bonus.epicT = Math.max(0, bonus.epicT - dt);
+
+    if (bonus.time <= 0) {
+      bonus.ending += dt;
+      if (bonus.ending >= 0.9) {
+        finishBonus();
+        return;
+      }
+    } else if (bonus.banner <= 0) {
+      bonus.time = Math.max(0, bonus.time - dt);
+      if (bonus.time <= 4 && Math.ceil(bonus.time) !== lastTickSecond) {
+        lastTickSecond = Math.ceil(bonus.time);
+        audio.tick();
+      }
+      bonus.spawn -= dt;
+      if (bonus.spawn <= 0) {
+        spawnBonusWave(w, h);
+        const rush = bonus.time < 4;
+        bonus.spawn = (rush ? 0.28 : 0.52) * (0.72 + Math.random() * 0.45);
+      }
+    }
+
+    for (let i = bonus.targets.length - 1; i >= 0; i--) {
+      const target = bonus.targets[i];
+      target.vy += gravity * dt;
+      target.x += target.vx * dt;
+      target.y += target.vy * dt;
+      target.rot += target.spin * dt;
+      if (target.hit || (target.y > h + target.r + 40 && target.vy > 0)) {
+        bonus.targets.splice(i, 1);
+      }
+    }
+    for (let i = bonus.halves.length - 1; i >= 0; i--) {
+      const piece = bonus.halves[i];
+      piece.life -= dt;
+      piece.vy += gravity * dt;
+      piece.x += piece.vx * dt;
+      piece.y += piece.vy * dt;
+      piece.rot += piece.spin * dt;
+      if (piece.life <= 0) bonus.halves.splice(i, 1);
+    }
+    for (let i = bonus.trail.length - 1; i >= 0; i--) {
+      bonus.trail[i].life -= dt;
+      if (bonus.trail[i].life <= 0) bonus.trail.splice(i, 1);
+    }
+
+    for (let i = state.particles.length - 1; i >= 0; i--) {
+      const part = state.particles[i];
+      part.life -= dt;
+      part.x += part.vx * dt;
+      part.y += part.vy * dt;
+      part.vy += 240 * dt;
+      if (part.life <= 0) state.particles.splice(i, 1);
+    }
+    for (let i = state.floaters.length - 1; i >= 0; i--) {
+      const f = state.floaters[i];
+      f.life -= dt;
+      f.y += f.vy * dt;
+      f.vy *= 0.98;
+      if (f.life <= 0) state.floaters.splice(i, 1);
+    }
+    state.shake = Math.max(0, state.shake - dt);
+    state.flash = Math.max(0, state.flash - dt);
     updateHud();
   }
 
@@ -1401,11 +1784,11 @@ function initTreatHunt(canvas) {
 
     if (state.lives <= 0) {
       overTitle.textContent = "The night wins";
-      overBlurb.textContent = `Reached ${currentLevel().name}. Max combo x${state.maxCombo}.`;
+      overBlurb.textContent = `Reached ${currentLevel().world}. Max combo x${state.maxCombo}.`;
       audio.lose();
     } else if (won || state.levelsCleared >= LEVELS.length) {
       overTitle.textContent = "The vigil is kept";
-      overBlurb.textContent = `All 5 nights cleared. Max combo x${state.maxCombo}.`;
+      overBlurb.textContent = `All four worlds cleared. Max combo x${state.maxCombo}.`;
       audio.win();
     } else if (state.score >= 800 || state.maxCombo >= 14) {
       overTitle.textContent = "A legendary haul";
@@ -1413,7 +1796,7 @@ function initTreatHunt(canvas) {
       audio.win();
     } else if (state.score >= 350) {
       overTitle.textContent = "The moon remembers";
-      overBlurb.textContent = `Cleared ${state.levelsCleared} nights. Combo x${state.maxCombo}.`;
+      overBlurb.textContent = `Cleared ${state.levelsCleared} levels. Combo x${state.maxCombo}.`;
       audio.win();
     } else {
       overTitle.textContent = "Dawn almost";
@@ -1471,6 +1854,7 @@ function initTreatHunt(canvas) {
     if (!running && !paused) return;
     running = false;
     paused = false;
+    state.bonus = null;
     cancelAnimationFrame(rafId);
     audio.stopMusic();
     aimX = null;
@@ -1481,6 +1865,10 @@ function initTreatHunt(canvas) {
   }
 
   function update(dt) {
+    if (state.bonus) {
+      updateBonus(dt);
+      return;
+    }
     const { w, h } = logicalSize();
     const p = state.player;
     const lvl = currentLevel();
@@ -1567,7 +1955,7 @@ function initTreatHunt(canvas) {
     if (state.timeLeft <= 0) {
       state.timeLeft = 0;
       updateHud();
-      advanceLevel();
+      beginBonus();
       return;
     }
 
@@ -1787,909 +2175,486 @@ function initTreatHunt(canvas) {
     g.stroke();
   }
 
+  function paintMoon(g, x, y, r, core, glow) {
+    const halo = g.createRadialGradient(x, y, r * 0.2, x, y, r * 2.6);
+    halo.addColorStop(0, glow);
+    halo.addColorStop(1, "rgba(0,0,0,0)");
+    g.fillStyle = halo;
+    g.beginPath();
+    g.arc(x, y, r * 2.6, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = core;
+    g.beginPath();
+    g.arc(x, y, r, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = "rgba(8, 30, 28, 0.1)";
+    g.beginPath();
+    g.arc(x - r * 0.12, y + r * 0.04, r * 0.42, 0, Math.PI * 2);
+    g.fill();
+  }
+
+  function paintGalleon(g, x, y, s, flip) {
+    g.save();
+    g.translate(x, y);
+    g.scale((flip ? -1 : 1) * s, s);
+    g.fillStyle = "#071018";
+    g.beginPath();
+    g.moveTo(-52, 4);
+    g.quadraticCurveTo(-48, 28, 4, 30);
+    g.quadraticCurveTo(56, 24, 60, 2);
+    g.lineTo(42, -4);
+    g.lineTo(-40, -4);
+    g.closePath();
+    g.fill();
+    g.fillRect(-24, -82, 3, 78);
+    g.fillRect(8, -102, 3, 98);
+    g.fillRect(34, -60, 2.5, 56);
+    g.fillStyle = "#121c24";
+    g.beginPath();
+    g.moveTo(-21, -76);
+    g.lineTo(4, -66);
+    g.lineTo(4, -18);
+    g.lineTo(-21, -12);
+    g.fill();
+    g.beginPath();
+    g.moveTo(11, -96);
+    g.lineTo(38, -82);
+    g.lineTo(38, -26);
+    g.lineTo(11, -18);
+    g.fill();
+    g.fillStyle = "#e8843a";
+    for (let i = 0; i < 4; i++) g.fillRect(-30 + i * 16, 8, 4, 3.2);
+    g.restore();
+  }
+
+  function paintCastle(g, x, base, s) {
+    g.save();
+    g.translate(x, base);
+    g.scale(s, s);
+    g.fillStyle = "#070d14";
+    g.fillRect(-30, -78, 60, 78);
+    g.beginPath();
+    g.moveTo(-10, -78);
+    g.lineTo(0, -138);
+    g.lineTo(12, -78);
+    g.fill();
+    g.fillRect(-56, -52, 24, 52);
+    g.fillRect(36, -64, 20, 64);
+    g.beginPath();
+    g.moveTo(-56, -52);
+    g.lineTo(-44, -86);
+    g.lineTo(-32, -52);
+    g.fill();
+    g.beginPath();
+    g.moveTo(36, -64);
+    g.lineTo(46, -104);
+    g.lineTo(56, -64);
+    g.fill();
+    g.fillStyle = "#e8843a";
+    const windows = [[-46, -32], [-8, -52], [10, -30], [42, -40], [0, -96], [-4, -18]];
+    for (const [wx, wy] of windows) g.fillRect(wx, wy, 4, 7);
+    g.restore();
+  }
+
+  function paintJack(g, x, y, s) {
+    g.save();
+    g.translate(x, y);
+    g.scale(s, s);
+    const glow = g.createRadialGradient(0, 0, 2, 0, 0, 22);
+    glow.addColorStop(0, "rgba(255, 150, 40, 0.55)");
+    glow.addColorStop(1, "rgba(255, 120, 20, 0)");
+    g.fillStyle = glow;
+    g.beginPath();
+    g.arc(0, 0, 22, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = "#c45a12";
+    g.beginPath();
+    g.ellipse(0, 2, 11, 9, 0, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = "#e8843a";
+    g.beginPath();
+    g.ellipse(0, 0, 10, 8, 0, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = "#2a1408";
+    g.beginPath();
+    g.moveTo(-5, -1);
+    g.lineTo(-2.2, 2);
+    g.lineTo(-7, 2);
+    g.moveTo(5, -1);
+    g.lineTo(2.2, 2);
+    g.lineTo(7, 2);
+    g.fill();
+    g.fillRect(-3.5, 3.2, 7, 1.8);
+    g.fillStyle = "#143028";
+    g.beginPath();
+    g.moveTo(-2, -8);
+    g.quadraticCurveTo(0, -14, 3, -7);
+    g.fill();
+    g.restore();
+  }
+
+  function paintRocks(g, w, y) {
+    g.fillStyle = "#070c10";
+    g.beginPath();
+    g.moveTo(0, y + 30);
+    g.lineTo(0, y - 6);
+    g.quadraticCurveTo(w * 0.05, y - 36, w * 0.13, y - 4);
+    g.quadraticCurveTo(w * 0.18, y + 10, w * 0.24, y + 22);
+    g.closePath();
+    g.fill();
+    g.beginPath();
+    g.moveTo(w, y + 30);
+    g.lineTo(w, y - 2);
+    g.quadraticCurveTo(w * 0.92, y - 42, w * 0.82, y - 6);
+    g.quadraticCurveTo(w * 0.76, y + 12, w * 0.68, y + 22);
+    g.closePath();
+    g.fill();
+  }
+
+  function paintSea(g, w, h, y, crest, deep) {
+    const sea = g.createLinearGradient(0, y - 18, 0, h);
+    sea.addColorStop(0, crest);
+    sea.addColorStop(1, deep);
+    g.fillStyle = sea;
+    g.beginPath();
+    g.moveTo(0, y);
+    for (let x = 0; x <= w; x += 18) {
+      g.lineTo(x, y - 7 + Math.sin(x * 0.035) * 6);
+    }
+    g.lineTo(w, h);
+    g.lineTo(0, h);
+    g.closePath();
+    g.fill();
+    g.strokeStyle = "rgba(190, 245, 236, 0.32)";
+    g.lineWidth = 1.6;
+    g.beginPath();
+    g.moveTo(0, y);
+    for (let x = 0; x <= w; x += 18) {
+      g.lineTo(x, y - 7 + Math.sin(x * 0.035) * 6);
+    }
+    g.stroke();
+  }
+
+  function paintBreach(g, x, y, s) {
+    g.save();
+    g.translate(x, y);
+    g.scale(s, s);
+    g.fillStyle = "#163e48";
+    g.beginPath();
+    g.moveTo(-36, 58);
+    g.quadraticCurveTo(16, 8, 78, -24);
+    g.quadraticCurveTo(140, -62, 176, -16);
+    g.quadraticCurveTo(156, 12, 108, 18);
+    g.quadraticCurveTo(64, 30, 16, 60);
+    g.closePath();
+    g.fill();
+    g.fillStyle = "rgba(168, 230, 220, 0.32)";
+    g.beginPath();
+    g.moveTo(48, -6);
+    g.quadraticCurveTo(110, -34, 158, -8);
+    g.quadraticCurveTo(112, 8, 62, 8);
+    g.closePath();
+    g.fill();
+    g.fillStyle = "#061014";
+    g.beginPath();
+    g.ellipse(138, -16, 4.2, 3, 0.3, 0, Math.PI * 2);
+    g.fill();
+    g.strokeStyle = "rgba(210, 250, 244, 0.4)";
+    g.lineWidth = 1.3;
+    for (let i = 0; i < 6; i++) {
+      g.beginPath();
+      g.moveTo(24 + i * 9, 16);
+      g.lineTo(10 + i * 11, -16 - i * 7);
+      g.stroke();
+    }
+    g.restore();
+  }
+
+  function paintTail(g, x, y, s) {
+    g.save();
+    g.translate(x, y);
+    g.scale(s, s);
+    g.fillStyle = "#0c2832";
+    g.beginPath();
+    g.moveTo(0, 90);
+    g.quadraticCurveTo(-16, 8, -86, -78);
+    g.quadraticCurveTo(-36, -18, -6, -4);
+    g.quadraticCurveTo(0, 24, 0, 90);
+    g.fill();
+    g.beginPath();
+    g.moveTo(0, 90);
+    g.quadraticCurveTo(18, 6, 90, -68);
+    g.quadraticCurveTo(38, -14, 8, -2);
+    g.quadraticCurveTo(0, 24, 0, 90);
+    g.fill();
+    g.strokeStyle = "rgba(170, 236, 226, 0.4)";
+    g.lineWidth = 2;
+    g.beginPath();
+    g.moveTo(-78, -66);
+    g.quadraticCurveTo(-18, 4, 0, 78);
+    g.quadraticCurveTo(22, 2, 80, -56);
+    g.stroke();
+    g.strokeStyle = "rgba(210, 250, 246, 0.28)";
+    g.lineWidth = 1.2;
+    for (let i = 0; i < 5; i++) {
+      g.beginPath();
+      g.moveTo(-8 + i * 4, 10);
+      g.lineTo(-16 + i * 6, 46 + i * 4);
+      g.stroke();
+    }
+    g.restore();
+  }
+
+  function paintVignette(g, w, h) {
+    const v = g.createRadialGradient(w * 0.5, h * 0.46, w * 0.18, w * 0.5, h * 0.5, w * 0.75);
+    v.addColorStop(0, "rgba(0,0,0,0)");
+    v.addColorStop(1, "rgba(0,0,0,0.32)");
+    g.fillStyle = v;
+    g.fillRect(0, 0, w, h);
+  }
+
+  function paintHarbor(g, w, h, breach) {
+    const waterY = h * 0.66;
+    const s = Math.max(1.55, Math.min(2.25, w / 420));
+    paintSky(g, w, h, [
+      [0, "#021016"],
+      [0.42, "#083038"],
+      [0.72, "#0e4c48"],
+      [1, "#062028"],
+    ]);
+    paintStars(g, w, h, 26, 3);
+    paintMoon(g, w * 0.6, h * 0.2, Math.min(h * 0.2, 128), "#c8fff2", "rgba(70, 190, 170, 0.55)");
+    paintCastle(g, w * 0.82, waterY + 6, s);
+    paintGalleon(g, w * 0.13, waterY - 6, s * 0.92, false);
+    paintBreach(g, w * (breach ? 0.32 : 0.48), waterY - h * (breach ? 0.16 : 0.1), breach ? s * 1.15 : s * 0.9);
+    paintSea(g, w, h, waterY, "rgba(12, 78, 86, 0.96)", "#03141a");
+    paintRocks(g, w, waterY + 16);
+    paintJack(g, w * 0.06, waterY + 10, 2);
+    paintJack(g, w * 0.14, waterY + 22, 1.25);
+    paintJack(g, w * 0.94, waterY + 12, 1.8);
+    paintGroundBand(
+      g, w, h,
+      [[0, "rgba(8, 24, 28, 0)"], [0.35, "rgba(6, 16, 20, 0.75)"], [1, "#041014"]],
+      "rgba(127, 212, 203, 0.35)"
+    );
+    paintVignette(g, w, h);
+  }
+
+  function paintFleet(g, w, h) {
+    const waterY = h * 0.66;
+    const s = Math.max(1.45, Math.min(2.1, w / 440));
+    paintSky(g, w, h, [
+      [0, "#120804"],
+      [0.22, "#5c1c08"],
+      [0.48, "#e8843a"],
+      [0.72, "#163444"],
+      [1, "#07141c"],
+    ]);
+    paintMoon(g, w * 0.5, h * 0.22, Math.min(h * 0.24, 150), "#ffd2a0", "rgba(255, 140, 40, 0.6)");
+    g.fillStyle = "rgba(40, 16, 10, 0.28)";
+    g.beginPath();
+    g.ellipse(w * 0.22, h * 0.16, w * 0.18, 18, 0, 0, Math.PI * 2);
+    g.ellipse(w * 0.74, h * 0.12, w * 0.16, 14, 0, 0, Math.PI * 2);
+    g.fill();
+    paintCastle(g, w * 0.14, waterY + 4, s * 0.72);
+    paintCastle(g, w * 0.86, waterY + 2, s * 0.85);
+    paintGalleon(g, w * 0.08, waterY - 4, s * 0.78, false);
+    paintGalleon(g, w * 0.92, waterY - 2, s * 0.74, true);
+    paintTail(g, w * 0.5, waterY + 8, s * 1.15);
+    paintSea(g, w, h, waterY, "rgba(16, 58, 72, 0.94)", "#04121a");
+    paintRocks(g, w, waterY + 16);
+    paintJack(g, w * 0.05, waterY + 12, 2.1);
+    paintJack(g, w * 0.95, waterY + 14, 1.9);
+    paintJack(g, w * 0.18, waterY + 24, 1.15);
+    paintGroundBand(
+      g, w, h,
+      [[0, "rgba(20, 10, 6, 0)"], [0.4, "rgba(12, 18, 22, 0.8)"], [1, "#071014"]],
+      "rgba(232, 132, 58, 0.4)"
+    );
+    paintVignette(g, w, h);
+  }
+
+  function paintCloak(g, w, h) {
+    const waterY = h * 0.66;
+    const s = Math.max(1.6, Math.min(2.3, w / 400));
+    paintSky(g, w, h, [
+      [0, "#100806"],
+      [0.3, "#4a180c"],
+      [0.55, "#c45a12"],
+      [0.78, "#143038"],
+      [1, "#07141c"],
+    ]);
+    paintMoon(g, w * 0.66, h * 0.22, Math.min(h * 0.26, 156), "#ffc98a", "rgba(255, 130, 30, 0.55)");
+    paintCastle(g, w * 0.68, waterY + 4, s * 1.05);
+    g.save();
+    g.globalAlpha = 0.22;
+    g.fillStyle = "#ffd9a0";
+    g.beginPath();
+    g.moveTo(w * 0.68, waterY + 4 - 138 * s * 1.05);
+    g.lineTo(w * 0.68 - 90, waterY - 10);
+    g.lineTo(w * 0.68 + 36, waterY - 10);
+    g.fill();
+    g.restore();
+    paintGalleon(g, w * 0.9, waterY - 4, s * 0.62, true);
+    g.fillStyle = "rgba(8, 12, 18, 0.82)";
+    const bats = [[0.16, 0.14], [0.26, 0.2], [0.38, 0.1], [0.46, 0.18], [0.22, 0.08]];
+    for (const [bx, by] of bats) {
+      const x = w * bx;
+      const y = h * by;
+      g.beginPath();
+      g.moveTo(x, y);
+      g.quadraticCurveTo(x - 14, y - 9, x - 16, y);
+      g.quadraticCurveTo(x - 6, y - 2, x, y + 3);
+      g.quadraticCurveTo(x + 6, y - 2, x + 16, y);
+      g.quadraticCurveTo(x + 14, y - 9, x, y);
+      g.fill();
+    }
+    paintSea(g, w, h, waterY, "rgba(12, 42, 52, 0.95)", "#041018");
+    paintRocks(g, w, waterY + 16);
+    paintJack(g, w * 0.06, waterY + 12, 2);
+    paintJack(g, w * 0.16, waterY + 24, 1.2);
+    paintJack(g, w * 0.95, waterY + 14, 1.7);
+    paintGroundBand(
+      g, w, h,
+      [[0, "rgba(20, 8, 4, 0)"], [0.4, "rgba(10, 16, 20, 0.8)"], [1, "#071014"]],
+      "rgba(232, 132, 58, 0.38)"
+    );
+    paintVignette(g, w, h);
+  }
+
+  function paintDeep(g, w, h) {
+    const groundY = h - 28;
+    paintSky(g, w, h, [
+      [0, "#b7fff4"],
+      [0.1, "#2a8a86"],
+      [0.34, "#0c3c44"],
+      [0.7, "#062028"],
+      [1, "#031014"],
+    ]);
+    g.save();
+    g.globalAlpha = 0.14;
+    g.fillStyle = "#e7fff8";
+    for (let i = 0; i < 5; i++) {
+      g.beginPath();
+      g.moveTo(w * (0.12 + i * 0.17), 0);
+      g.lineTo(w * (0.2 + i * 0.17), h);
+      g.lineTo(w * (0.05 + i * 0.17), h);
+      g.fill();
+    }
+    g.restore();
+    g.fillStyle = "rgba(220, 255, 250, 0.4)";
+    for (let i = 0; i < 16; i++) {
+      g.beginPath();
+      g.arc((i * 97) % w, (i * 53) % (h * 0.72), 1.4 + (i % 3), 0, Math.PI * 2);
+      g.fill();
+    }
+    const s = Math.max(1.5, Math.min(2.15, w / 440));
+    g.save();
+    g.translate(w * 0.72, groundY - 90);
+    g.rotate(-0.42);
+    paintGalleon(g, 0, 0, s * 0.85, false);
+    g.restore();
+    paintBreach(g, w * 0.02, h * 0.28, s * 0.55);
+    paintRocks(g, w, groundY + 4);
+    paintJack(g, w * 0.08, groundY - 2, 2.15);
+    paintJack(g, w * 0.2, groundY + 8, 1.3);
+    paintJack(g, w * 0.9, groundY, 1.9);
+    paintJack(g, w * 0.76, groundY + 10, 1.15);
+    paintGroundBand(
+      g, w, h,
+      [[0, "rgba(4, 16, 20, 0)"], [0.3, "rgba(4, 18, 22, 0.82)"], [1, "#021014"]],
+      "rgba(127, 212, 203, 0.28)"
+    );
+    paintVignette(g, w, h);
+  }
+
   function buildLevelBackground(theme, w, h) {
     const c = document.createElement("canvas");
     c.width = w;
     c.height = h;
     const g = c.getContext("2d");
-    const groundY = h - 28;
-
-    if (theme === "candy") {
-      // Spooky haunted-house lane — deep violet night + pumpkin moon
-      paintSky(g, w, h, [
-        [0, "#070510"],
-        [0.35, "#1a0a2e"],
-        [0.62, "#3a1848"],
-        [0.82, "#5a2030"],
-        [1, "#120810"],
-      ]);
-      paintStars(g, w, h, 42, 2);
-
-      // Harvest moon
-      const moonGlow = g.createRadialGradient(w * 0.78, 52, 6, w * 0.78, 52, 70);
-      moonGlow.addColorStop(0, "rgba(255, 200, 90, 0.55)");
-      moonGlow.addColorStop(0.45, "rgba(255, 122, 26, 0.2)");
-      moonGlow.addColorStop(1, "rgba(255, 80, 20, 0)");
-      g.fillStyle = moonGlow;
-      g.beginPath();
-      g.arc(w * 0.78, 52, 70, 0, Math.PI * 2);
-      g.fill();
-      g.fillStyle = "#ffd48a";
-      g.beginPath();
-      g.arc(w * 0.78, 52, 26, 0, Math.PI * 2);
-      g.fill();
-      g.fillStyle = "rgba(180, 100, 40, 0.22)";
-      g.beginPath();
-      g.arc(w * 0.76, 48, 7, 0, Math.PI * 2);
-      g.arc(w * 0.81, 58, 5, 0, Math.PI * 2);
-      g.fill();
-
-      // Distant tree line
-      g.fillStyle = "#0c0814";
-      g.beginPath();
-      g.moveTo(0, groundY);
-      for (let x = 0; x <= w; x += 18) {
-        const th = 28 + ((x * 13) % 40);
-        g.lineTo(x, groundY - th);
-      }
-      g.lineTo(w, groundY);
-      g.closePath();
-      g.fill();
-
-      // Haunted manor silhouette (center-right)
-      const hx = w * 0.42;
-      const hw = Math.min(w * 0.42, 220);
-      const hh = Math.min(h * 0.42, 180);
-      const hy = groundY - hh;
-      g.fillStyle = "#0a0612";
-      // Main body
-      g.fillRect(hx, hy + hh * 0.22, hw, hh * 0.78);
-      // Left wing
-      g.fillRect(hx - hw * 0.18, hy + hh * 0.38, hw * 0.22, hh * 0.62);
-      // Right tower
-      g.fillRect(hx + hw * 0.72, hy, hw * 0.28, hh);
-      // Roofs
-      g.beginPath();
-      g.moveTo(hx - 4, hy + hh * 0.22);
-      g.lineTo(hx + hw * 0.5, hy - 8);
-      g.lineTo(hx + hw + 4, hy + hh * 0.22);
-      g.closePath();
-      g.fill();
-      g.beginPath();
-      g.moveTo(hx + hw * 0.7, hy);
-      g.lineTo(hx + hw * 0.86, hy - 28);
-      g.lineTo(hx + hw + 6, hy);
-      g.closePath();
-      g.fill();
-      // Spire
-      g.fillRect(hx + hw * 0.84, hy - 42, 4, 20);
-      g.beginPath();
-      g.moveTo(hx + hw * 0.84 - 4, hy - 42);
-      g.lineTo(hx + hw * 0.86, hy - 56);
-      g.lineTo(hx + hw * 0.84 + 8, hy - 42);
-      g.closePath();
-      g.fill();
-
-      // Glowing windows
-      for (const [wx, wy, ww, wh] of [
-        [hx + hw * 0.18, hy + hh * 0.38, 14, 18],
-        [hx + hw * 0.42, hy + hh * 0.38, 14, 18],
-        [hx + hw * 0.28, hy + hh * 0.62, 16, 22],
-        [hx + hw * 0.52, hy + hh * 0.62, 16, 22],
-        [hx + hw * 0.8, hy + hh * 0.28, 12, 16],
-        [hx + hw * 0.8, hy + hh * 0.52, 12, 16],
-        [hx - hw * 0.1, hy + hh * 0.55, 10, 14],
-      ]) {
-        const glow = g.createRadialGradient(
-          wx + ww / 2,
-          wy + wh / 2,
-          1,
-          wx + ww / 2,
-          wy + wh / 2,
-          28
-        );
-        glow.addColorStop(0, "rgba(255, 180, 60, 0.55)");
-        glow.addColorStop(1, "rgba(255, 100, 20, 0)");
-        g.fillStyle = glow;
-        g.fillRect(wx - 10, wy - 8, ww + 20, wh + 16);
-        g.fillStyle = "#ffb84a";
-        g.globalAlpha = 0.7;
-        g.fillRect(wx, wy, ww, wh);
-        g.globalAlpha = 1;
-        g.strokeStyle = "#1a1020";
-        g.lineWidth = 1;
-        g.strokeRect(wx, wy, ww, wh);
-        g.beginPath();
-        g.moveTo(wx + ww / 2, wy);
-        g.lineTo(wx + ww / 2, wy + wh);
-        g.moveTo(wx, wy + wh / 2);
-        g.lineTo(wx + ww, wy + wh / 2);
-        g.stroke();
-      }
-
-      // Door
-      g.fillStyle = "#120818";
-      g.fillRect(hx + hw * 0.4, groundY - 36, hw * 0.14, 36);
-      g.fillStyle = "rgba(255, 160, 50, 0.25)";
-      g.beginPath();
-      g.arc(hx + hw * 0.47, groundY - 18, 2.5, 0, Math.PI * 2);
-      g.fill();
-
-      // Bare trees flanking
-      for (const [tx, th] of [
-        [w * 0.1, 95],
-        [w * 0.22, 70],
-        [w * 0.92, 88],
-      ]) {
-        g.strokeStyle = "#140c1c";
-        g.lineWidth = 4;
-        g.lineCap = "round";
-        g.beginPath();
-        g.moveTo(tx, groundY);
-        g.lineTo(tx, groundY - th);
-        g.stroke();
-        g.lineWidth = 2.5;
-        g.beginPath();
-        g.moveTo(tx, groundY - th * 0.55);
-        g.lineTo(tx - 18, groundY - th * 0.85);
-        g.moveTo(tx, groundY - th * 0.45);
-        g.lineTo(tx + 16, groundY - th * 0.75);
-        g.moveTo(tx, groundY - th * 0.72);
-        g.lineTo(tx - 10, groundY - th * 0.95);
-        g.moveTo(tx, groundY - th * 0.68);
-        g.lineTo(tx + 12, groundY - th * 0.92);
-        g.stroke();
-      }
-
-      // Crooked picket fence
-      g.strokeStyle = "#2a1c30";
-      g.lineWidth = 2;
-      g.beginPath();
-      g.moveTo(0, groundY - 22);
-      g.lineTo(w * 0.38, groundY - 26);
-      g.stroke();
-      g.beginPath();
-      g.moveTo(w * 0.78, groundY - 24);
-      g.lineTo(w, groundY - 20);
-      g.stroke();
-      for (let x = 8; x < w * 0.38; x += 16) {
-        g.fillStyle = "#241828";
-        g.beginPath();
-        g.moveTo(x - 3, groundY - 8);
-        g.lineTo(x, groundY - 34 - (x % 7));
-        g.lineTo(x + 3, groundY - 8);
-        g.closePath();
-        g.fill();
-      }
-      for (let x = w * 0.8; x < w - 6; x += 16) {
-        g.fillStyle = "#241828";
-        g.beginPath();
-        g.moveTo(x - 3, groundY - 8);
-        g.lineTo(x, groundY - 32 - (x % 5));
-        g.lineTo(x + 3, groundY - 8);
-        g.closePath();
-        g.fill();
-      }
-
-      // Ground fog wash
-      const fog = g.createLinearGradient(0, groundY - 50, 0, groundY);
-      fog.addColorStop(0, "rgba(120, 90, 160, 0)");
-      fog.addColorStop(1, "rgba(80, 50, 110, 0.28)");
-      g.fillStyle = fog;
-      g.fillRect(0, groundY - 50, w, 50);
-
-      paintGroundBand(
-        g,
-        w,
-        h,
-        [
-          [0, "rgba(255, 122, 26, 0)"],
-          [0.35, "rgba(40, 16, 48, 0.65)"],
-          [1, "rgba(8, 4, 12, 0.96)"],
-        ],
-        "rgba(255, 140, 60, 0.35)"
-      );
-    } else if (theme === "pumpkin") {
-      // Jack-o'-lantern patch at Halloween dusk
-      paintSky(g, w, h, [
-        [0, "#0a0614"],
-        [0.28, "#1c0c28"],
-        [0.55, "#4a1828"],
-        [0.78, "#c45a18"],
-        [1, "#1a0c08"],
-      ]);
-      paintStars(g, w, h, 22, 5);
-
-      // Low harvest sun on the horizon
-      const sun = g.createRadialGradient(w * 0.5, groundY + 8, 10, w * 0.5, groundY + 8, 110);
-      sun.addColorStop(0, "#ffe08a");
-      sun.addColorStop(0.35, "#ff7a1a");
-      sun.addColorStop(0.7, "rgba(180, 40, 20, 0.35)");
-      sun.addColorStop(1, "rgba(80, 20, 40, 0)");
-      g.fillStyle = sun;
-      g.beginPath();
-      g.arc(w * 0.5, groundY + 10, 100, Math.PI, 0);
-      g.fill();
-
-      // Distant hill ridge
-      g.fillStyle = "#120818";
-      g.beginPath();
-      g.moveTo(0, groundY - 20);
-      g.quadraticCurveTo(w * 0.25, groundY - 55, w * 0.5, groundY - 30);
-      g.quadraticCurveTo(w * 0.75, groundY - 60, w, groundY - 24);
-      g.lineTo(w, groundY);
-      g.lineTo(0, groundY);
-      g.closePath();
-      g.fill();
-
-      // Corn maze edges (left / right)
-      const drawCorn = (baseX, count, lean) => {
-        for (let i = 0; i < count; i++) {
-          const x = baseX + i * 11;
-          const tall = 55 + ((i * 17) % 35);
-          g.strokeStyle = i % 2 ? "#4a6a22" : "#3a5818";
-          g.lineWidth = 2.2;
-          g.beginPath();
-          g.moveTo(x, groundY);
-          g.quadraticCurveTo(x + lean * 10, groundY - tall * 0.5, x + lean * 4, groundY - tall);
-          g.stroke();
-          g.strokeStyle = "#6b8f2a";
-          g.lineWidth = 1.4;
-          g.beginPath();
-          g.moveTo(x + lean * 2, groundY - tall * 0.55);
-          g.lineTo(x + lean * 14, groundY - tall * 0.7);
-          g.moveTo(x + lean * 2, groundY - tall * 0.4);
-          g.lineTo(x - lean * 10, groundY - tall * 0.58);
-          g.stroke();
-        }
-      };
-      drawCorn(6, 7, 1);
-      drawCorn(w - 82, 7, -1);
-
-      // Scarecrow silhouette
-      const sx = w * 0.18;
-      const sy = groundY - 95;
-      g.strokeStyle = "#1a100c";
-      g.fillStyle = "#1a100c";
-      g.lineWidth = 4;
-      g.lineCap = "round";
-      g.beginPath();
-      g.moveTo(sx, groundY);
-      g.lineTo(sx, sy + 20);
-      g.stroke();
-      g.lineWidth = 3;
-      g.beginPath();
-      g.moveTo(sx - 28, sy + 38);
-      g.lineTo(sx + 30, sy + 32);
-      g.stroke();
-      g.beginPath();
-      g.ellipse(sx, sy + 12, 11, 13, 0, 0, Math.PI * 2);
-      g.fill();
-      // Hat
-      g.fillRect(sx - 14, sy + 2, 28, 5);
-      g.beginPath();
-      g.moveTo(sx - 9, sy + 2);
-      g.lineTo(sx - 7, sy - 14);
-      g.lineTo(sx + 9, sy - 12);
-      g.lineTo(sx + 11, sy + 2);
-      g.closePath();
-      g.fill();
-      // Floppy coat
-      g.beginPath();
-      g.moveTo(sx - 16, sy + 28);
-      g.lineTo(sx - 22, sy + 70);
-      g.lineTo(sx + 20, sy + 70);
-      g.lineTo(sx + 14, sy + 26);
-      g.closePath();
-      g.fill();
-
-      // Crooked fence behind the field
-      g.strokeStyle = "#2a1a10";
-      g.lineWidth = 2.5;
-      g.beginPath();
-      g.moveTo(w * 0.32, groundY - 40);
-      g.lineTo(w * 0.95, groundY - 34);
-      g.stroke();
-      for (let x = w * 0.34; x < w * 0.95; x += 26) {
-        g.fillStyle = "#2e1c12";
-        g.fillRect(x, groundY - 56, 5, 38);
-        g.beginPath();
-        g.moveTo(x - 1, groundY - 56);
-        g.lineTo(x + 2.5, groundY - 66);
-        g.lineTo(x + 6, groundY - 56);
-        g.fill();
-      }
-
-      // Helper: draw a pumpkin (plain or carved)
-      const paintPumpkin = (x, y, r, carved = false, shade = "#e8650e") => {
-        g.fillStyle = shade;
-        g.beginPath();
-        g.ellipse(x, y, r, r * 0.78, 0, 0, Math.PI * 2);
-        g.fill();
-        g.fillStyle = "rgba(0,0,0,0.12)";
-        g.beginPath();
-        g.ellipse(x - r * 0.35, y, r * 0.28, r * 0.7, 0, 0, Math.PI * 2);
-        g.ellipse(x + r * 0.35, y, r * 0.28, r * 0.7, 0, 0, Math.PI * 2);
-        g.fill();
-        g.fillStyle = "#3f8a2c";
-        g.fillRect(x - 2, y - r * 0.9, 4, r * 0.35);
-        if (carved) {
-          const glow = g.createRadialGradient(x, y, 2, x, y, r * 1.4);
-          glow.addColorStop(0, "rgba(255, 200, 80, 0.55)");
-          glow.addColorStop(1, "rgba(255, 100, 20, 0)");
-          g.fillStyle = glow;
-          g.beginPath();
-          g.arc(x, y, r * 1.15, 0, Math.PI * 2);
-          g.fill();
-          g.fillStyle = "#ffd166";
-          g.beginPath();
-          g.moveTo(x - r * 0.35, y - r * 0.15);
-          g.lineTo(x - r * 0.15, y + r * 0.05);
-          g.lineTo(x - r * 0.45, y + r * 0.05);
-          g.closePath();
-          g.moveTo(x + r * 0.35, y - r * 0.15);
-          g.lineTo(x + r * 0.15, y + r * 0.05);
-          g.lineTo(x + r * 0.45, y + r * 0.05);
-          g.closePath();
-          g.fill();
-          g.beginPath();
-          g.moveTo(x - r * 0.35, y + r * 0.25);
-          g.quadraticCurveTo(x, y + r * 0.55, x + r * 0.35, y + r * 0.25);
-          g.quadraticCurveTo(x, y + r * 0.38, x - r * 0.35, y + r * 0.25);
-          g.fill();
-        }
-      };
-
-      // Field pumpkins (layered)
-      paintPumpkin(w * 0.08, groundY - 6, 11, false, "#c45a12");
-      paintPumpkin(w * 0.28, groundY - 5, 13, false, "#e8650e");
-      paintPumpkin(w * 0.72, groundY - 6, 12, true);
-      paintPumpkin(w * 0.88, groundY - 5, 15, false, "#d4550c");
-      paintPumpkin(w * 0.58, groundY - 4, 10, false, "#b84810");
-
-      // Hero jack-o'-lantern (midground)
-      const jx = w * 0.5;
-      const jy = groundY - 22;
-      const jr = Math.min(48, w * 0.11);
-      const jackGlow = g.createRadialGradient(jx, jy, 4, jx, jy, jr * 2.2);
-      jackGlow.addColorStop(0, "rgba(255, 200, 80, 0.65)");
-      jackGlow.addColorStop(0.5, "rgba(255, 122, 26, 0.28)");
-      jackGlow.addColorStop(1, "rgba(255, 80, 20, 0)");
-      g.fillStyle = jackGlow;
-      g.beginPath();
-      g.arc(jx, jy, jr * 2.1, 0, Math.PI * 2);
-      g.fill();
-      paintPumpkin(jx, jy, jr, true, "#ff7a1a");
-      // Extra bold face on hero
-      g.fillStyle = "#ffe08a";
-      g.beginPath();
-      g.moveTo(jx - jr * 0.4, jy - jr * 0.2);
-      g.lineTo(jx - jr * 0.12, jy + jr * 0.08);
-      g.lineTo(jx - jr * 0.52, jy + jr * 0.08);
-      g.closePath();
-      g.moveTo(jx + jr * 0.4, jy - jr * 0.2);
-      g.lineTo(jx + jr * 0.12, jy + jr * 0.08);
-      g.lineTo(jx + jr * 0.52, jy + jr * 0.08);
-      g.closePath();
-      g.fill();
-      g.beginPath();
-      g.moveTo(jx - jr * 0.42, jy + jr * 0.28);
-      g.lineTo(jx - jr * 0.2, jy + jr * 0.48);
-      g.lineTo(jx, jy + jr * 0.32);
-      g.lineTo(jx + jr * 0.2, jy + jr * 0.48);
-      g.lineTo(jx + jr * 0.42, jy + jr * 0.28);
-      g.quadraticCurveTo(jx, jy + jr * 0.42, jx - jr * 0.42, jy + jr * 0.28);
-      g.fill();
-
-      // Ground haze
-      const haze = g.createLinearGradient(0, groundY - 40, 0, groundY);
-      haze.addColorStop(0, "rgba(255, 140, 40, 0)");
-      haze.addColorStop(1, "rgba(80, 30, 10, 0.35)");
-      g.fillStyle = haze;
-      g.fillRect(0, groundY - 40, w, 40);
-
-      paintGroundBand(
-        g,
-        w,
-        h,
-        [
-          [0, "rgba(255, 122, 26, 0)"],
-          [0.3, "rgba(60, 24, 10, 0.55)"],
-          [1, "rgba(10, 6, 4, 0.97)"],
-        ],
-        "rgba(255, 140, 40, 0.45)"
-      );
-    } else if (theme === "alley") {
-      // Gothic bat alley — narrow street between haunted tenements
-      paintSky(g, w, h, [
-        [0, "#05040c"],
-        [0.4, "#120c24"],
-        [0.75, "#2a1440"],
-        [1, "#0a0814"],
-      ]);
-      paintStars(g, w, h, 34, 3);
-
-      // Sliver of orange moon between rooftops
-      const moon = g.createRadialGradient(w * 0.5, 36, 4, w * 0.5, 36, 40);
-      moon.addColorStop(0, "rgba(255, 200, 120, 0.7)");
-      moon.addColorStop(1, "rgba(255, 100, 40, 0)");
-      g.fillStyle = moon;
-      g.beginPath();
-      g.arc(w * 0.5, 36, 38, 0, Math.PI * 2);
-      g.fill();
-      g.fillStyle = "#ffd4a0";
-      g.beginPath();
-      g.arc(w * 0.5, 36, 14, 0, Math.PI * 2);
-      g.fill();
-
-      const wallW = Math.min(88, w * 0.2);
-      // Layered building silhouettes (back)
-      g.fillStyle = "#100c1a";
-      g.fillRect(0, 20, wallW + 18, groundY - 20);
-      g.fillRect(w - wallW - 18, 30, wallW + 18, groundY - 30);
-      // Front walls
-      g.fillStyle = "#1a1428";
-      g.fillRect(0, 0, wallW, groundY);
-      g.fillRect(w - wallW, 0, wallW, groundY);
-      // Roofline teeth
-      g.fillStyle = "#0e0a16";
-      for (let i = 0; i < 5; i++) {
-        const rx = 4 + i * (wallW / 5);
-        g.beginPath();
-        g.moveTo(rx, 8);
-        g.lineTo(rx + wallW / 10, -6);
-        g.lineTo(rx + wallW / 5, 8);
-        g.fill();
-        const rx2 = w - wallW + rx;
-        g.beginPath();
-        g.moveTo(rx2, 12);
-        g.lineTo(rx2 + wallW / 10, -2);
-        g.lineTo(rx2 + wallW / 5, 12);
-        g.fill();
-      }
-      // Brick hints
-      g.fillStyle = "rgba(255, 90, 70, 0.07)";
-      for (let y = 24; y < groundY - 16; y += 14) {
-        for (let x = 6; x < wallW - 8; x += 16) {
-          g.fillRect(x + ((y / 14) % 2) * 6, y, 12, 9);
-          g.fillRect(w - wallW + x + ((y / 14) % 2) * 6, y + 6, 12, 9);
-        }
-      }
-
-      // Glowing windows (pumpkin orange + violet + pink)
-      const windows = [
-        [wallW * 0.28, h * 0.18, "#ffb84a", "rgba(255,180,60,0.45)"],
-        [wallW * 0.55, h * 0.18, "#c4a0ff", "rgba(180,140,255,0.4)"],
-        [wallW * 0.28, h * 0.36, "#ff8fab", "rgba(255,140,180,0.4)"],
-        [wallW * 0.55, h * 0.36, "#ffb84a", "rgba(255,180,60,0.45)"],
-        [wallW * 0.4, h * 0.54, "#ff7a1a", "rgba(255,120,30,0.4)"],
-        [w - wallW * 0.72, h * 0.2, "#ffb84a", "rgba(255,180,60,0.45)"],
-        [w - wallW * 0.45, h * 0.2, "#a78bfa", "rgba(180,140,255,0.4)"],
-        [w - wallW * 0.72, h * 0.38, "#ffb84a", "rgba(255,180,60,0.45)"],
-        [w - wallW * 0.45, h * 0.52, "#ff8fab", "rgba(255,140,180,0.4)"],
-      ];
-      for (const [x, y, col, rgba] of windows) {
-        const rg = g.createRadialGradient(x + 8, y + 10, 1, x + 8, y + 10, 26);
-        rg.addColorStop(0, rgba);
-        rg.addColorStop(1, "rgba(0,0,0,0)");
-        g.fillStyle = rg;
-        g.fillRect(x - 8, y - 6, 32, 36);
-        g.fillStyle = col;
-        g.globalAlpha = 0.65;
-        g.fillRect(x, y, 15, 20);
-        g.globalAlpha = 1;
-        g.strokeStyle = "#2a2038";
-        g.strokeRect(x, y, 15, 20);
-      }
-
-      // Hanging lanterns
-      for (const lx of [wallW + 10, w - wallW - 10]) {
-        g.strokeStyle = "rgba(200,180,140,0.35)";
-        g.lineWidth = 1.5;
-        g.beginPath();
-        g.moveTo(lx, 48);
-        g.lineTo(lx, 72);
-        g.stroke();
-        const lg = g.createRadialGradient(lx, 82, 2, lx, 82, 28);
-        lg.addColorStop(0, "rgba(255, 180, 60, 0.55)");
-        lg.addColorStop(1, "rgba(255, 100, 20, 0)");
-        g.fillStyle = lg;
-        g.beginPath();
-        g.arc(lx, 82, 28, 0, Math.PI * 2);
-        g.fill();
-        g.fillStyle = "#ffb84a";
-        g.beginPath();
-        g.moveTo(lx - 6, 76);
-        g.lineTo(lx + 6, 76);
-        g.lineTo(lx + 5, 88);
-        g.lineTo(lx - 5, 88);
-        g.closePath();
-        g.fill();
-      }
-
-      // Clothesline + hanging sheets
-      g.strokeStyle = "rgba(180,180,210,0.4)";
-      g.lineWidth = 1.5;
-      g.beginPath();
-      g.moveTo(wallW, h * 0.3);
-      g.quadraticCurveTo(w / 2, h * 0.24, w - wallW, h * 0.32);
-      g.stroke();
-      g.fillStyle = "rgba(160, 150, 190, 0.18)";
-      g.fillRect(w * 0.38, h * 0.26, 18, 28);
-      g.fillRect(w * 0.55, h * 0.25, 14, 24);
-
-      // Cobble hint in alley floor
-      g.fillStyle = "rgba(80, 70, 110, 0.2)";
-      for (let x = wallW + 8; x < w - wallW - 8; x += 14) {
-        g.beginPath();
-        g.ellipse(x, groundY - 8, 6, 3, 0, 0, Math.PI * 2);
-        g.fill();
-      }
-
-      // Cat silhouette on left sill
-      g.fillStyle = "#0a0812";
-      g.beginPath();
-      g.ellipse(wallW - 18, h * 0.48, 8, 5, 0, 0, Math.PI * 2);
-      g.fill();
-      g.beginPath();
-      g.moveTo(wallW - 24, h * 0.46);
-      g.lineTo(wallW - 26, h * 0.4);
-      g.lineTo(wallW - 20, h * 0.45);
-      g.moveTo(wallW - 14, h * 0.46);
-      g.lineTo(wallW - 12, h * 0.39);
-      g.lineTo(wallW - 18, h * 0.45);
-      g.fill();
-
-      // Static bat flock
-      g.fillStyle = "rgba(90, 100, 140, 0.55)";
-      for (const [bx, by, s] of [
-        [w * 0.35, 44, 1],
-        [w * 0.42, 58, 1.2],
-        [w * 0.5, 40, 0.9],
-        [w * 0.58, 62, 1.1],
-        [w * 0.65, 48, 1],
-      ]) {
-        g.beginPath();
-        g.moveTo(bx, by);
-        g.quadraticCurveTo(bx - 12 * s, by - 8 * s, bx - 14 * s, by);
-        g.quadraticCurveTo(bx - 6 * s, by - 2 * s, bx, by + 3 * s);
-        g.quadraticCurveTo(bx + 6 * s, by - 2 * s, bx + 14 * s, by);
-        g.quadraticCurveTo(bx + 12 * s, by - 8 * s, bx, by);
-        g.fill();
-      }
-
-      paintGroundBand(
-        g,
-        w,
-        h,
-        [
-          [0, "rgba(140, 100, 220, 0)"],
-          [0.35, "rgba(24, 14, 40, 0.7)"],
-          [1, "rgba(6, 4, 12, 0.97)"],
-        ],
-        "rgba(180, 120, 255, 0.28)"
-      );
-    } else if (theme === "grave") {
-      // Moonlit cemetery — iron gates, crypt, restless mist
-      paintSky(g, w, h, [
-        [0, "#060a0c"],
-        [0.35, "#0e1c18"],
-        [0.65, "#1a3028"],
-        [0.85, "#243828"],
-        [1, "#080c0a"],
-      ]);
-      paintStars(g, w, h, 40, 7);
-
-      // Pale green moon with soft clouds
-      const moon = g.createRadialGradient(w * 0.8, 48, 6, w * 0.8, 48, 55);
-      moon.addColorStop(0, "#eef8e4");
-      moon.addColorStop(0.4, "rgba(200, 230, 180, 0.55)");
-      moon.addColorStop(1, "rgba(140, 180, 140, 0)");
-      g.fillStyle = moon;
-      g.beginPath();
-      g.arc(w * 0.8, 48, 50, 0, Math.PI * 2);
-      g.fill();
-      g.fillStyle = "#e8f0dc";
-      g.beginPath();
-      g.arc(w * 0.8, 48, 28, 0, Math.PI * 2);
-      g.fill();
-      g.fillStyle = "rgba(40, 60, 45, 0.2)";
-      g.beginPath();
-      g.arc(w * 0.77, 42, 6, 0, Math.PI * 2);
-      g.arc(w * 0.84, 54, 5, 0, Math.PI * 2);
-      g.fill();
-      // Cloud wisps across moon
-      g.fillStyle = "rgba(20, 36, 28, 0.35)";
-      g.beginPath();
-      g.ellipse(w * 0.72, 56, 28, 7, 0, 0, Math.PI * 2);
-      g.ellipse(w * 0.88, 40, 22, 6, 0, 0, Math.PI * 2);
-      g.fill();
-
-      // Dead tree left
-      g.strokeStyle = "#1a2820";
-      g.lineWidth = 4;
-      g.lineCap = "round";
-      g.beginPath();
-      g.moveTo(w * 0.1, groundY);
-      g.lineTo(w * 0.12, groundY - 100);
-      g.stroke();
-      g.lineWidth = 2.5;
-      for (const [ax, ay, bx, by] of [
-        [w * 0.12, groundY - 60, w * 0.02, groundY - 90],
-        [w * 0.12, groundY - 75, w * 0.22, groundY - 105],
-        [w * 0.12, groundY - 45, w * 0.2, groundY - 70],
-      ]) {
-        g.beginPath();
-        g.moveTo(ax, ay);
-        g.quadraticCurveTo((ax + bx) / 2, (ay + by) / 2 - 8, bx, by);
-        g.stroke();
-      }
-
-      // Crypt / mausoleum right
-      const cx = w * 0.78;
-      const cy = groundY - 78;
-      g.fillStyle = "#243028";
-      g.fillRect(cx, cy + 18, 70, 60);
-      g.beginPath();
-      g.moveTo(cx - 4, cy + 18);
-      g.lineTo(cx + 35, cy);
-      g.lineTo(cx + 74, cy + 18);
-      g.closePath();
-      g.fill();
-      g.fillStyle = "#0c100e";
-      g.fillRect(cx + 24, groundY - 36, 22, 36);
-      g.fillStyle = "rgba(200, 245, 74, 0.15)";
-      g.fillRect(cx + 12, cy + 28, 12, 14);
-      g.fillRect(cx + 46, cy + 28, 12, 14);
-
-      // Wrought iron gate arch (center)
-      g.strokeStyle = "#2e3c34";
-      g.lineWidth = 3;
-      g.beginPath();
-      g.moveTo(w * 0.28, groundY);
-      g.lineTo(w * 0.28, groundY - 72);
-      g.quadraticCurveTo(w * 0.5, groundY - 110, w * 0.72, groundY - 72);
-      g.lineTo(w * 0.72, groundY);
-      g.stroke();
-      g.lineWidth = 2;
-      for (let x = w * 0.3; x < w * 0.7; x += 12) {
-        const top = groundY - 72 - Math.sin(((x - w * 0.28) / (w * 0.44)) * Math.PI) * 28;
-        g.beginPath();
-        g.moveTo(x, groundY);
-        g.lineTo(x, top);
-        g.stroke();
-        g.beginPath();
-        g.moveTo(x - 2, top);
-        g.lineTo(x + 2, top - 8);
-        g.lineTo(x + 6, top);
-        g.stroke();
-      }
-      // Gate crossbar
-      g.beginPath();
-      g.moveTo(w * 0.3, groundY - 40);
-      g.lineTo(w * 0.7, groundY - 40);
-      g.stroke();
-
-      // Tombstones (varied)
-      const stones = [
-        [w * 0.14, 38, 26, "arch"],
-        [w * 0.36, 30, 20, "cross"],
-        [w * 0.52, 42, 24, "arch"],
-        [w * 0.66, 28, 18, "slab"],
-        [w * 0.9, 34, 22, "arch"],
-      ];
-      for (const [x, hh, ww, shape] of stones) {
-        g.fillStyle = "#3a4540";
-        if (shape === "cross") {
-          g.fillRect(x - 3, groundY - hh, 6, hh);
-          g.fillRect(x - 10, groundY - hh + 8, 20, 5);
-        } else if (shape === "slab") {
-          g.fillRect(x - ww / 2, groundY - hh, ww, hh);
-        } else {
-          g.beginPath();
-          g.moveTo(x - ww / 2, groundY);
-          g.lineTo(x - ww / 2, groundY - hh + 10);
-          g.quadraticCurveTo(x, groundY - hh - 8, x + ww / 2, groundY - hh + 10);
-          g.lineTo(x + ww / 2, groundY);
-          g.closePath();
-          g.fill();
-        }
-        g.fillStyle = "rgba(200,245,74,0.14)";
-        g.fillRect(x - 5, groundY - hh * 0.5, 10, 3);
-        g.fillRect(x - 1.5, groundY - hh * 0.65, 3, 12);
-      }
-
-      // Owl on gate
-      g.fillStyle = "#1a2420";
-      g.beginPath();
-      g.ellipse(w * 0.5, groundY - 98, 7, 9, 0, 0, Math.PI * 2);
-      g.fill();
-      g.fillStyle = "rgba(200,245,74,0.35)";
-      g.beginPath();
-      g.arc(w * 0.48, groundY - 100, 1.5, 0, Math.PI * 2);
-      g.arc(w * 0.52, groundY - 100, 1.5, 0, Math.PI * 2);
-      g.fill();
-
-      // Mist banks
-      g.fillStyle = "rgba(160, 200, 170, 0.1)";
-      g.beginPath();
-      g.ellipse(w * 0.3, groundY - 18, w * 0.28, 16, 0, 0, Math.PI * 2);
-      g.ellipse(w * 0.7, groundY - 12, w * 0.32, 14, 0, 0, Math.PI * 2);
-      g.fill();
-
-      paintGroundBand(
-        g,
-        w,
-        h,
-        [
-          [0, "rgba(120, 180, 130, 0)"],
-          [0.35, "rgba(14, 28, 18, 0.72)"],
-          [1, "rgba(4, 10, 8, 0.97)"],
-        ],
-        "rgba(150, 210, 160, 0.3)"
-      );
-    } else {
-      // Midnight Haunt — final night: ruined chapel under a cracked green moon
-      paintSky(g, w, h, [
-        [0, "#010204"],
-        [0.3, "#06140e"],
-        [0.55, "#0c2418"],
-        [0.8, "#143020"],
-        [1, "#040806"],
-      ]);
-      paintStars(g, w, h, 58, 11);
-
-      // Massive cracked haunt moon
-      const moon = g.createRadialGradient(w * 0.68, 64, 12, w * 0.68, 64, 95);
-      moon.addColorStop(0, "#f5ffe8");
-      moon.addColorStop(0.3, "#d4f0a0");
-      moon.addColorStop(0.65, "rgba(200, 245, 74, 0.35)");
-      moon.addColorStop(1, "rgba(200, 245, 74, 0)");
-      g.fillStyle = moon;
-      g.beginPath();
-      g.arc(w * 0.68, 64, 88, 0, Math.PI * 2);
-      g.fill();
-      g.fillStyle = "#eaf8c8";
-      g.beginPath();
-      g.arc(w * 0.68, 64, 52, 0, Math.PI * 2);
-      g.fill();
-      // Craters + cracks
-      g.fillStyle = "rgba(20, 40, 24, 0.28)";
-      g.beginPath();
-      g.arc(w * 0.62, 52, 10, 0, Math.PI * 2);
-      g.arc(w * 0.74, 78, 8, 0, Math.PI * 2);
-      g.arc(w * 0.7, 48, 5, 0, Math.PI * 2);
-      g.fill();
-      g.strokeStyle = "rgba(40, 70, 40, 0.4)";
-      g.lineWidth = 1.5;
-      g.beginPath();
-      g.moveTo(w * 0.6, 40);
-      g.lineTo(w * 0.66, 70);
-      g.lineTo(w * 0.72, 55);
-      g.moveTo(w * 0.7, 90);
-      g.lineTo(w * 0.76, 60);
-      g.stroke();
-
-      // Ruined chapel silhouette (center)
-      const chx = w * 0.38;
-      const chw = Math.min(w * 0.32, 160);
-      const chh = Math.min(h * 0.38, 150);
-      g.fillStyle = "#0c1610";
-      g.fillRect(chx, groundY - chh * 0.7, chw, chh * 0.7);
-      // Broken roof
-      g.beginPath();
-      g.moveTo(chx - 6, groundY - chh * 0.7);
-      g.lineTo(chx + chw * 0.35, groundY - chh);
-      g.lineTo(chx + chw * 0.55, groundY - chh * 0.78);
-      g.lineTo(chx + chw * 0.7, groundY - chh * 0.95);
-      g.lineTo(chx + chw + 6, groundY - chh * 0.65);
-      g.lineTo(chx + chw, groundY - chh * 0.7);
-      g.closePath();
-      g.fill();
-      // Bell tower stub
-      g.fillRect(chx + chw * 0.7, groundY - chh * 1.05, chw * 0.22, chh * 0.4);
-      g.beginPath();
-      g.moveTo(chx + chw * 0.68, groundY - chh * 1.05);
-      g.lineTo(chx + chw * 0.81, groundY - chh * 1.22);
-      g.lineTo(chx + chw * 0.94, groundY - chh * 1.05);
-      g.closePath();
-      g.fill();
-      // Glowing doorway (haunt portal)
-      const portal = g.createRadialGradient(
-        chx + chw * 0.45,
-        groundY - 28,
-        4,
-        chx + chw * 0.45,
-        groundY - 28,
-        50
-      );
-      portal.addColorStop(0, "rgba(200, 245, 74, 0.55)");
-      portal.addColorStop(0.5, "rgba(200, 245, 74, 0.18)");
-      portal.addColorStop(1, "rgba(200, 245, 74, 0)");
-      g.fillStyle = portal;
-      g.beginPath();
-      g.arc(chx + chw * 0.45, groundY - 28, 48, 0, Math.PI * 2);
-      g.fill();
-      g.fillStyle = "#c8f54a";
-      g.globalAlpha = 0.55;
-      g.beginPath();
-      g.moveTo(chx + chw * 0.32, groundY);
-      g.lineTo(chx + chw * 0.32, groundY - 48);
-      g.quadraticCurveTo(chx + chw * 0.45, groundY - 62, chx + chw * 0.58, groundY - 48);
-      g.lineTo(chx + chw * 0.58, groundY);
-      g.closePath();
-      g.fill();
-      g.globalAlpha = 1;
-      // Window glow in chapel
-      g.fillStyle = "rgba(200, 245, 74, 0.35)";
-      g.fillRect(chx + chw * 0.15, groundY - chh * 0.5, 14, 18);
-      g.fillRect(chx + chw * 0.65, groundY - chh * 0.48, 12, 16);
-
-      // Dead trees flanking
-      const drawHauntTree = (tx, th, lean) => {
-        g.strokeStyle = "#15261a";
-        g.lineWidth = 5;
-        g.lineCap = "round";
-        g.beginPath();
-        g.moveTo(tx, groundY);
-        g.lineTo(tx + lean * 8, groundY - th);
-        g.stroke();
-        g.lineWidth = 2.8;
-        g.beginPath();
-        g.moveTo(tx + lean * 4, groundY - th * 0.55);
-        g.lineTo(tx + lean * 28, groundY - th * 0.85);
-        g.moveTo(tx + lean * 3, groundY - th * 0.4);
-        g.lineTo(tx - lean * 20, groundY - th * 0.7);
-        g.moveTo(tx + lean * 6, groundY - th * 0.7);
-        g.lineTo(tx + lean * 18, groundY - th * 0.95);
-        g.stroke();
-      };
-      drawHauntTree(w * 0.1, 115, 1);
-      drawHauntTree(w * 0.9, 100, -1);
-
-      // Ruined pillars right
-      g.fillStyle = "#1e2e24";
-      g.fillRect(w * 0.82, groundY - 88, 14, 88);
-      g.fillRect(w * 0.92, groundY - 64, 12, 64);
-      g.fillStyle = "#2a3c30";
-      g.fillRect(w * 0.8, groundY - 94, 20, 9);
-      g.fillRect(w * 0.9, groundY - 70, 18, 8);
-
-      // Scattered rubble / bones hint
-      g.fillStyle = "#243428";
-      g.fillRect(w * 0.22, groundY - 10, 18, 6);
-      g.fillRect(w * 0.7, groundY - 8, 14, 5);
-      g.strokeStyle = "rgba(220, 230, 200, 0.2)";
-      g.lineWidth = 2;
-      g.beginPath();
-      g.moveTo(w * 0.3, groundY - 4);
-      g.lineTo(w * 0.34, groundY - 14);
-      g.moveTo(w * 0.74, groundY - 3);
-      g.lineTo(w * 0.78, groundY - 12);
-      g.stroke();
-
-      // Thick green haunt fog
-      const fog = g.createRadialGradient(w * 0.5, groundY, 20, w * 0.5, groundY, w * 0.6);
-      fog.addColorStop(0, "rgba(200, 245, 74, 0.16)");
-      fog.addColorStop(1, "rgba(200, 245, 74, 0)");
-      g.fillStyle = fog;
-      g.fillRect(0, groundY - 70, w, 70);
-
-      paintGroundBand(
-        g,
-        w,
-        h,
-        [
-          [0, "rgba(200, 245, 74, 0)"],
-          [0.3, "rgba(10, 28, 14, 0.7)"],
-          [1, "rgba(2, 8, 4, 0.98)"],
-        ],
-        "rgba(200, 245, 74, 0.45)"
-      );
-    }
-
+    if (theme === "fleet") paintFleet(g, w, h);
+    else if (theme === "cloak") paintCloak(g, w, h);
+    else if (theme === "deep") paintDeep(g, w, h);
+    else paintHarbor(g, w, h, theme === "breach");
     return c;
   }
+
+  function paintWorldMotion(theme, w, h) {
+    const t = performance.now() * 0.001;
+    const groundY = h - 28;
+    if (theme === "fleet") {
+      ctx.globalAlpha = 0.12 + Math.sin(t * 1.6) * 0.05;
+      ctx.fillStyle = "#ffb06a";
+      ctx.beginPath();
+      ctx.arc(w * 0.5, h * 0.2, 70, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = `rgba(210, 250, 246, ${0.18 + Math.sin(t * 2) * 0.08})`;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(0, h * 0.66);
+      for (let x = 0; x <= w; x += 18) {
+        ctx.lineTo(x, h * 0.66 + Math.sin(x * 0.04 + t * 1.4) * 3);
+      }
+      ctx.stroke();
+    } else if (theme === "cloak") {
+      ctx.fillStyle = "rgba(10, 14, 20, 0.72)";
+      for (let i = 0; i < 4; i++) {
+        const x = w * (0.2 + i * 0.12) + Math.sin(t * 1.5 + i) * 18;
+        const y = h * 0.16 + i * 10 + Math.cos(t * 2 + i) * 6;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.quadraticCurveTo(x - 11, y - 7, x - 13, y);
+        ctx.quadraticCurveTo(x - 5, y - 2, x, y + 2);
+        ctx.quadraticCurveTo(x + 5, y - 2, x + 13, y);
+        ctx.quadraticCurveTo(x + 11, y - 7, x, y);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 0.16 + Math.sin(t * 3) * 0.08;
+      ctx.fillStyle = "#ffd9a0";
+      ctx.beginPath();
+      ctx.arc(w * 0.7, groundY - 90, 18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    } else if (theme === "deep") {
+      ctx.fillStyle = "rgba(220, 255, 250, 0.45)";
+      for (let i = 0; i < 7; i++) {
+        const y = ((h * 0.85 - ((t * 28 + i * 70) % (h * 0.9))));
+        ctx.beginPath();
+        ctx.arc((i * 127) % w, y, 1.6 + (i % 3) * 0.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      const pulse = 0.18 + Math.sin(t * 3.2) * 0.1;
+      ctx.globalAlpha = pulse;
+      ctx.fillStyle = "#ffb04a";
+      ctx.beginPath();
+      ctx.arc(w * 0.1, groundY - 4, 16, 0, Math.PI * 2);
+      ctx.arc(w * 0.86, groundY - 2, 14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    } else {
+      ctx.globalAlpha = 0.1 + Math.sin(t * 1.3) * 0.04;
+      ctx.fillStyle = "#9fe8df";
+      ctx.beginPath();
+      ctx.arc(w * 0.58, h * 0.16, 40, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = `rgba(190, 245, 236, ${0.16 + Math.sin(t * 1.8) * 0.06})`;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(0, h * 0.66);
+      for (let x = 0; x <= w; x += 18) {
+        ctx.lineTo(x, h * 0.66 + Math.sin(x * 0.045 + t) * 3);
+      }
+      ctx.stroke();
+      ctx.fillStyle = `rgba(180, 230, 224, ${0.06 + Math.sin(t * 0.6) * 0.03})`;
+      ctx.beginPath();
+      ctx.ellipse(w * 0.4 + Math.sin(t * 0.35) * 16, h * 0.66 + 6, w * 0.22, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
 
   function getBackground(theme, w, h) {
     const key = `${theme}:${w}x${h}`;
@@ -2701,177 +2666,11 @@ function initTreatHunt(canvas) {
 
   function drawBackground(w, h) {
     const lvl = currentLevel();
-    const theme = lvl.theme || "candy";
+    const theme = lvl.theme || "harbor";
     ctx.drawImage(getBackground(theme, w, h), 0, 0);
 
     if (!quality.bgMotion) return;
-
-    // Light animated accents per theme (cheap overlays)
-    const t = performance.now() * 0.001;
-    const groundY = h - 28;
-
-    if (theme === "candy") {
-      // Flickering window glow + moon pulse
-      ctx.globalAlpha = 0.12 + Math.sin(t * 3.2) * 0.06;
-      ctx.fillStyle = "#ffb84a";
-      ctx.beginPath();
-      ctx.arc(w * 0.62, h * 0.42, 36 + Math.sin(t * 2) * 4, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 0.1 + Math.sin(t * 1.4) * 0.04;
-      ctx.fillStyle = "#ff7a1a";
-      ctx.beginPath();
-      ctx.arc(w * 0.78, 52, 34 + Math.sin(t) * 3, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-      // Drifting fog wisps
-      ctx.fillStyle = `rgba(140, 110, 180, ${0.06 + Math.sin(t * 0.7) * 0.03})`;
-      ctx.beginPath();
-      ctx.ellipse(
-        w * 0.25 + Math.sin(t * 0.4) * 24,
-        groundY - 16,
-        w * 0.22,
-        12,
-        0,
-        0,
-        Math.PI * 2
-      );
-      ctx.ellipse(
-        w * 0.7 + Math.cos(t * 0.35) * 18,
-        groundY - 12,
-        w * 0.18,
-        10,
-        0,
-        0,
-        Math.PI * 2
-      );
-      ctx.fill();
-    } else if (theme === "pumpkin") {
-      // Jack-o'-lantern flicker + ground heat shimmer
-      const pulse = 0.14 + Math.sin(t * 4.5) * 0.08;
-      ctx.globalAlpha = pulse;
-      ctx.fillStyle = "#ffb84a";
-      ctx.beginPath();
-      ctx.arc(w * 0.5, groundY - 22, 55 + Math.sin(t * 3) * 6, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = pulse * 0.7;
-      ctx.beginPath();
-      ctx.arc(w * 0.72, groundY - 6, 22, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-      ctx.strokeStyle = `rgba(255, 180, 60, ${0.12 + Math.sin(t * 2) * 0.05})`;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(0, groundY);
-      for (let x = 0; x <= w; x += 18) {
-        ctx.lineTo(x, groundY + Math.sin(x * 0.08 + t * 2) * 2.2);
-      }
-      ctx.stroke();
-      // Drifting embers
-      ctx.fillStyle = `rgba(255, 200, 100, ${0.25 + Math.sin(t * 3) * 0.15})`;
-      for (let i = 0; i < 5; i++) {
-        const ex = w * (0.2 + i * 0.15) + Math.sin(t * 1.2 + i) * 12;
-        const ey = groundY - 50 - i * 18 + Math.cos(t * 1.6 + i) * 10;
-        ctx.beginPath();
-        ctx.arc(ex, ey, 1.4, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    } else if (theme === "alley") {
-      // Flying bats + lantern pulse
-      ctx.fillStyle = "rgba(100, 110, 150, 0.55)";
-      for (let i = 0; i < 5; i++) {
-        const bx = w * (0.28 + i * 0.1) + Math.sin(t * 1.6 + i) * 22;
-        const by = 36 + i * 12 + Math.cos(t * 2.1 + i) * 8;
-        const s = 0.85 + (i % 3) * 0.15;
-        ctx.beginPath();
-        ctx.moveTo(bx, by);
-        ctx.quadraticCurveTo(bx - 12 * s, by - 8 * s, bx - 14 * s, by);
-        ctx.quadraticCurveTo(bx - 6 * s, by - 2 * s, bx, by + 3 * s);
-        ctx.quadraticCurveTo(bx + 6 * s, by - 2 * s, bx + 14 * s, by);
-        ctx.quadraticCurveTo(bx + 12 * s, by - 8 * s, bx, by);
-        ctx.fill();
-      }
-      const wallW = Math.min(88, w * 0.2);
-      ctx.globalAlpha = 0.15 + Math.sin(t * 3.5) * 0.08;
-      ctx.fillStyle = "#ffb84a";
-      ctx.beginPath();
-      ctx.arc(wallW + 10, 82, 22, 0, Math.PI * 2);
-      ctx.arc(w - wallW - 10, 82, 22, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-    } else if (theme === "grave") {
-      // Drifting cemetery mist + owl eye blink
-      ctx.fillStyle = `rgba(160, 200, 170, ${0.07 + Math.sin(t * 0.8) * 0.035})`;
-      ctx.beginPath();
-      ctx.ellipse(
-        w * 0.35 + Math.sin(t * 0.45) * 24,
-        groundY - 18,
-        w * 0.3,
-        15,
-        0,
-        0,
-        Math.PI * 2
-      );
-      ctx.ellipse(
-        w * 0.72 + Math.cos(t * 0.35) * 20,
-        groundY - 12,
-        w * 0.26,
-        13,
-        0,
-        0,
-        Math.PI * 2
-      );
-      ctx.fill();
-      ctx.fillStyle = `rgba(200,245,74,${0.2 + Math.sin(t * 2.2) * 0.15})`;
-      ctx.beginPath();
-      ctx.arc(w * 0.48, groundY - 100, 1.6, 0, Math.PI * 2);
-      ctx.arc(w * 0.52, groundY - 100, 1.6, 0, Math.PI * 2);
-      ctx.fill();
-      // Will-o'-wisps
-      ctx.fillStyle = `rgba(180, 230, 160, ${0.2 + Math.sin(t * 2) * 0.12})`;
-      for (let i = 0; i < 3; i++) {
-        ctx.beginPath();
-        ctx.arc(
-          w * (0.25 + i * 0.2) + Math.sin(t + i) * 16,
-          groundY - 40 - i * 12 + Math.cos(t * 1.3 + i) * 8,
-          2,
-          0,
-          Math.PI * 2
-        );
-        ctx.fill();
-      }
-    } else if (theme === "haunt") {
-      // Portal pulse + ground fog + moon twinkles
-      const pulse = 0.08 + Math.sin(t * 2.8) * 0.05;
-      ctx.globalAlpha = pulse;
-      ctx.fillStyle = "#c8f54a";
-      ctx.beginPath();
-      ctx.arc(w * 0.52, groundY - 28, 42 + Math.sin(t * 2) * 6, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = `rgba(200, 245, 74, ${0.06 + Math.sin(t) * 0.03})`;
-      ctx.beginPath();
-      ctx.ellipse(w * 0.5, groundY - 12, w * 0.42, 22, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = `rgba(255,255,220,${0.35 + Math.sin(t * 5) * 0.25})`;
-      ctx.beginPath();
-      ctx.arc(w * 0.55, 36, 1.6, 0, Math.PI * 2);
-      ctx.arc(w * 0.4, 70, 1.3, 0, Math.PI * 2);
-      ctx.arc(w * 0.78, 90, 1.2, 0, Math.PI * 2);
-      ctx.fill();
-      // Floating haunt wisps
-      ctx.fillStyle = `rgba(200, 245, 74, ${0.22 + Math.sin(t * 2.4) * 0.12})`;
-      for (let i = 0; i < 4; i++) {
-        ctx.beginPath();
-        ctx.arc(
-          w * (0.2 + i * 0.18) + Math.sin(t * 0.9 + i * 1.3) * 20,
-          groundY - 55 - i * 16 + Math.cos(t * 1.1 + i) * 12,
-          2.2,
-          0,
-          Math.PI * 2
-        );
-        ctx.fill();
-      }
-    }
+    paintWorldMotion(theme, w, h);
   }
 
   function drawWhale(look) {
@@ -3006,7 +2805,7 @@ function initTreatHunt(canvas) {
     // Shadow under sandals
     ctx.fillStyle = "rgba(0,0,0,0.38)";
     ctx.beginPath();
-    ctx.ellipse(0, p.h - 4, p.w * 0.34, 7, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, p.h - 4, p.w * 0.17, 3.5, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // Shield aura
@@ -3044,14 +2843,14 @@ function initTreatHunt(canvas) {
           ? playerSprite
           : null;
     if (painted && painted.naturalWidth > 0) {
-      const drawH = 196;
+      const drawH = 98;
       const drawW = drawH * (painted.naturalWidth / painted.naturalHeight);
       const foot = p.h - 2;
       const anchor = painted === vigilSprite ? 0.5 : 0.48;
       ctx.drawImage(painted, -drawW * anchor, foot - drawH, drawW, drawH);
     } else {
       ctx.translate(0, -18);
-      ctx.scale(2.15, 2.15);
+      ctx.scale(1.075, 1.075);
       drawWhale(getCharacter().id);
     }
     ctx.restore();
@@ -3149,17 +2948,123 @@ function initTreatHunt(canvas) {
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, w, h);
     ctx.globalAlpha = fade;
-    ctx.fillStyle = "#c4a574";
+    ctx.fillStyle = "#7fd4cb";
     ctx.font = "500 15px Outfit, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(`NIGHT ${lvl.id}`, w / 2, h * 0.42);
-    ctx.fillStyle = "#f6f1e8";
+    ctx.fillText((lvl.world || "WORLD").toUpperCase(), w / 2, h * 0.42);
+    ctx.fillStyle = "#e7f6f4";
     ctx.font = "560 28px Fraunces, Georgia, serif";
     ctx.fillText(lvl.name, w / 2, h * 0.42 + 32);
-    ctx.fillStyle = "#b7b1a6";
+    ctx.fillStyle = "#8fadb3";
     ctx.font = "500 14px Outfit, sans-serif";
     ctx.fillText(lvl.blurb, w / 2, h * 0.42 + 56);
     ctx.restore();
+  }
+
+  function drawBonusPieces() {
+    const bonus = state.bonus;
+    if (!bonus) return;
+    for (const piece of bonus.halves) {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, piece.life / piece.max);
+      ctx.translate(piece.x, piece.y);
+      ctx.rotate(piece.rot);
+      ctx.beginPath();
+      ctx.rect(piece.side < 0 ? -120 : 0, -120, 120, 240);
+      ctx.clip();
+      drawDropSprite(piece.kind, piece.r);
+      ctx.restore();
+    }
+    for (const target of bonus.targets) {
+      if (target.hit) continue;
+      ctx.save();
+      ctx.translate(target.x, target.y);
+      ctx.rotate(target.rot * 0.35);
+      if (target.bad) {
+        ctx.strokeStyle = "rgba(255, 77, 109, 0.9)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(0, 0, target.r + 7, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (target.rare && quality.glow) {
+        ctx.fillStyle = "rgba(255, 224, 138, 0.28)";
+        ctx.beginPath();
+        ctx.arc(0, 0, target.r + 16, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      drawDropSprite(target.kind, target.r);
+      ctx.restore();
+    }
+  }
+
+  function drawBlade() {
+    const trail = state.bonus && state.bonus.trail;
+    if (!trail || trail.length < 2) return;
+    ctx.save();
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    trail.forEach((point, i) => (i ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y)));
+    ctx.strokeStyle = "rgba(232, 132, 58, 0.45)";
+    ctx.lineWidth = 18;
+    if (quality.glow) {
+      ctx.shadowColor = "#e8843a";
+      ctx.shadowBlur = 16;
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = "#f4fffd";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawBonusFrame(w, h) {
+    const bonus = state.bonus;
+    if (!bonus) return;
+    const rush = bonus.time <= 4 && bonus.banner <= 0;
+    const pulse = 0.35 + Math.sin(performance.now() * (rush ? 0.012 : 0.005)) * 0.15;
+    ctx.save();
+    ctx.strokeStyle = rush ? `rgba(255, 77, 109, ${pulse})` : `rgba(232, 132, 58, ${pulse})`;
+    ctx.lineWidth = rush ? 8 : 5;
+    ctx.strokeRect(6, 6, w - 12, h - 12);
+    ctx.restore();
+    if (bonus.banner > 0) {
+      const fade = Math.min(1, bonus.banner * 2.2);
+      ctx.save();
+      ctx.globalAlpha = 0.45 * fade;
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, w, h);
+      ctx.globalAlpha = fade;
+      ctx.fillStyle = "#e8843a";
+      ctx.font = "700 16px Outfit, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("BONUS", w / 2, h * 0.38);
+      ctx.fillStyle = "#e7f6f4";
+      ctx.font = "560 34px Fraunces, Georgia, serif";
+      ctx.fillText("Slash the haul", w / 2, h * 0.38 + 40);
+      ctx.fillStyle = "#8fadb3";
+      ctx.font = "500 15px Outfit, sans-serif";
+      ctx.fillText("Pumpkins and candy. Not the skulls.", w / 2, h * 0.38 + 68);
+      ctx.restore();
+    } else if (bonus.scored === 0 && bonus.time > 10) {
+      ctx.save();
+      ctx.globalAlpha = 0.7;
+      ctx.fillStyle = "#e7f6f4";
+      ctx.font = "700 14px Outfit, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("DRAG TO SLASH", w / 2, h * 0.22);
+      ctx.restore();
+    }
+    if (bonus.epicT > 0) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, bonus.epicT * 2);
+      ctx.fillStyle = "#ffe08a";
+      ctx.font = "800 42px Outfit, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(bonus.epic, w / 2, h * 0.28);
+      ctx.restore();
+    }
   }
 
   function drawScene() {
@@ -3178,12 +3083,25 @@ function initTreatHunt(canvas) {
     }
 
     drawBackground(w, h);
-    drawDrops();
-    drawPlayer();
+    if (state.bonus) {
+      ctx.save();
+      ctx.globalAlpha = 0.4;
+      drawPlayer();
+      ctx.restore();
+      drawBonusPieces();
+    } else {
+      drawDrops();
+      drawPlayer();
+    }
     drawParticles();
     drawFloaters();
-    drawComboBanner(w);
-    drawLevelBanner(w, h);
+    if (state.bonus) {
+      drawBlade();
+      drawBonusFrame(w, h);
+    } else {
+      drawComboBanner(w);
+      drawLevelBanner(w, h);
+    }
 
     if (state.flash > 0) {
       const alphaMatch = state.flashColor.match(/[\d.]+\)$/);
@@ -3208,6 +3126,11 @@ function initTreatHunt(canvas) {
     }
     drawScene();
     rafId = requestAnimationFrame(loop);
+  }
+
+  function pointerToGame(event) {
+    const rect = canvas.getBoundingClientRect();
+    return { x: event.clientX - rect.left, y: event.clientY - rect.top };
   }
 
   function pointerToGameX(clientX) {
@@ -3278,7 +3201,8 @@ function initTreatHunt(canvas) {
     e.preventDefault();
     pointerKind = e.pointerType || "mouse";
     pointerActive = true;
-    aimX = pointerToGameX(e.clientX);
+    if (state.bonus) beginSlash(pointerToGame(e));
+    else aimX = pointerToGameX(e.clientX);
     try {
       canvas.setPointerCapture(e.pointerId);
     } catch {
@@ -3289,6 +3213,12 @@ function initTreatHunt(canvas) {
   canvas.addEventListener("pointermove", (e) => {
     if (!running || paused) return;
     pointerKind = e.pointerType || pointerKind;
+    if (state.bonus) {
+      if (!pointerActive) return;
+      e.preventDefault();
+      extendSlash(pointerToGame(e));
+      return;
+    }
 
     // Desktop/laptop: follow cursor while over the game (no click required)
     // Phones: only steer while finger is down
@@ -3304,12 +3234,14 @@ function initTreatHunt(canvas) {
   });
 
   canvas.addEventListener("pointerup", (e) => {
+    if (state.bonus) endSlash();
     pointerActive = false;
     // Keep aim on mouse for hover; clear on touch so release doesn't drag forever
     if ((e.pointerType || pointerKind) === "touch") aimX = null;
   });
 
   canvas.addEventListener("pointercancel", () => {
+    if (state.bonus) endSlash();
     pointerActive = false;
     aimX = null;
   });

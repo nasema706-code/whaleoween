@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Keep the night — Whaleoween</title>
-  <meta name="description" content="Keep the night. A five-night treat hunt for Whaleoween.">
-  <meta name="theme-color" content="#0c0b0a">
+  <meta name="description" content="Keep the night. Four ocean worlds and five levels for Whaleoween.">
+  <meta name="theme-color" content="#07141c">
   <meta name="color-scheme" content="dark">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230c0b0a'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='16' fill='%23f6f1e8' font-family='Georgia'%3EW%3C/text%3E%3C/svg%3E">
@@ -29,30 +29,36 @@
         <div class="section-head">
           <p class="eyebrow">Play</p>
           <h1>Keep the night.</h1>
-          <p>Five nights, from the lane to the hook. Catch the candy. Dodge the curses.</p>
+          <p>Four worlds, five levels, from the harbor to the wreck. Catch the candy. Clear a night and slash the flying haul.</p>
         </div>
         <div class="game-shell">
           <div class="game-stage" aria-label="Whaleoween treat hunt">
-            <canvas id="game" width="900" height="560" tabindex="0" aria-label="Game canvas. Arrow keys or A and D move. Space pauses."></canvas>
+            <canvas id="game" width="900" height="560" tabindex="0" aria-label="Game canvas. Arrow keys or A and D move. Drag to slash in a bonus round. Space pauses."></canvas>
             <div class="game-overlay" id="overlay" data-screen="start">
               <div class="game-panel game-panel-start" id="panel-start">
                 <p class="game-brand">$WHALEOWEEN</p>
                 <h2>Keep the night</h2>
-                <p class="game-lede">Choose a whale. Catch candy, pumpkins, and stars. Dodge the curses.</p>
+                <p class="game-lede">Choose a whale. Catch the haul, then slash flying pumpkins and candy. Skulls and spiders bite back.</p>
+                <ul class="worlds">
+                  <li>The Harbor</li>
+                  <li>The Fleet</li>
+                  <li>The Cloak</li>
+                  <li>The Deep</li>
+                </ul>
                 <div class="char-pick" id="char-pick">
                   <p class="char-pick-label">Choose your whale</p>
                   <div class="char-pick-grid" id="char-pick-grid" role="listbox" aria-label="Playable whales"></div>
                   <p class="char-pick-name" id="char-pick-name">The Lane</p>
                 </div>
                 <button class="btn" type="button" id="btn-start">Begin</button>
-                <p class="game-hint">Arrow keys or A D to move. Space to pause.</p>
+                <p class="game-hint">Arrow keys or A D to move. In a bonus round, drag to slash. Space to pause.</p>
               </div>
               <div class="game-panel" id="panel-pause" hidden>
                 <h2>The night waits</h2>
                 <p class="game-lede">Resume when you are ready.</p>
                 <div class="game-pause-actions">
                   <button class="btn" type="button" id="btn-resume">Resume</button>
-                  <button class="btn btn-ghost" type="button" id="btn-pause-quit">Leave the lane</button>
+                  <button class="btn btn-ghost" type="button" id="btn-pause-quit">Leave the night</button>
                 </div>
               </div>
               <div class="game-panel" id="panel-over" hidden>
@@ -66,7 +72,7 @@
             </div>
             <div class="game-hud" id="hud" hidden>
               <div class="game-hud-item">
-                <span class="game-hud-label">Night</span>
+                <span class="game-hud-label">Level</span>
                 <span class="game-hud-value" id="hud-level">1/5</span>
               </div>
               <div class="game-hud-item">
@@ -91,9 +97,11 @@
               </div>
             </div>
             <button class="game-pause-btn" type="button" id="btn-pause" hidden>Pause</button>
-            <button class="game-music" type="button" id="btn-music" aria-pressed="false">Music Off</button>
-            <button class="game-mute" type="button" id="btn-mute" aria-pressed="false">Sound On</button>
             <button class="game-quality" type="button" id="btn-quality" aria-label="Graphics quality">Auto</button>
+          </div>
+          <div class="game-audio">
+            <button class="game-mute" type="button" id="btn-mute" aria-pressed="false">Sound On</button>
+            <button class="game-music" type="button" id="btn-music" aria-pressed="false">Music Off</button>
           </div>
           <p class="game-touch-hint" id="touch-hint" hidden>Slide to steer. The whale follows your finger.</p>
         </div>

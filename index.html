@@ -5,22 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Whaleoween — $WHALEOWEEN</title>
   <meta name="description" content="Whaleoween is a Halloween memecoin on Solana. Ticker $WHALEOWEEN.">
-  <meta name="theme-color" content="#0c0b0a">
+  <meta name="theme-color" content="#07141c">
   <meta name="color-scheme" content="dark">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="format-detection" content="telephone=no">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230c0b0a'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='16' fill='%23f6f1e8' font-family='Georgia'%3EW%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,460;9..144,560&family=Outfit:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,460&family=Outfit:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0c0b0a;
-      --cream: #f6f1e8;
-      --muted: #b7b1a6;
-      --gold: #c4a574;
-      --ink: #161412;
-      --line: rgba(246, 241, 232, 0.16);
+      --bg: #07141c;
+      --cream: #e7f6f4;
+      --muted: #8fadb3;
+      --gold: #7fd4cb;
+      --ember: #e8843a;
+      --ink: #062027;
+      --line: rgba(127, 212, 203, 0.22);
       --pad: max(20px, env(safe-area-inset-left));
       --pad-r: max(20px, env(safe-area-inset-right));
     }
@@ -29,7 +30,8 @@
     body {
       margin: 0;
       background:
-        radial-gradient(900px 420px at 80% -10%, rgba(196, 165, 116, 0.09), transparent 55%),
+        radial-gradient(820px 440px at 50% -12%, rgba(127, 212, 203, 0.16), transparent 58%),
+        radial-gradient(520px 360px at 100% 8%, rgba(232, 132, 58, 0.1), transparent 55%),
         var(--bg);
       color: var(--cream);
       font-family: Outfit, "Segoe UI", sans-serif;
@@ -71,7 +73,8 @@
       justify-content: space-between;
       gap: 16px 24px;
       padding: max(14px, env(safe-area-inset-top)) 0 14px;
-      background: rgba(12, 11, 10, 0.9);
+      background: rgba(7, 20, 28, 0.9);
+      border-bottom: 1px solid var(--line);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
     }
@@ -80,21 +83,35 @@
       align-items: center;
       gap: 10px;
       min-width: 0;
-      font-family: Fraunces, Georgia, serif;
-      font-weight: 560;
-      font-size: 22px;
-      letter-spacing: -0.03em;
+      font-family: Outfit, "Segoe UI", sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
       text-decoration: none;
     }
     .brand img {
-      width: 40px;
-      height: 40px;
-      max-width: 40px;
+      width: 36px;
+      height: 36px;
+      max-width: 36px;
+      border: 1px solid var(--line);
       flex: 0 0 auto;
       object-fit: contain;
       background: transparent;
     }
-    .nav, .actions, .dock { display: flex; flex-wrap: wrap; gap: 8px; }
+    .nav, .hero-actions, .dock { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+    .nav-link {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      text-decoration: none;
+      min-height: 48px;
+      display: inline-flex;
+      align-items: center;
+    }
+    .nav-link:hover { color: var(--cream); }
     .btn {
       display: inline-flex;
       align-items: center;
@@ -114,52 +131,72 @@
       -webkit-tap-highlight-color: transparent;
     }
     .btn:hover { border-color: var(--cream); }
-    .btn:active { background: rgba(246, 241, 232, 0.08); }
-    .play-row { margin: 22px 0 0; }
-    .play-row .btn { border-color: var(--gold); color: var(--cream); }
-    .play-row .btn:hover { background: var(--cream); color: var(--ink); }
-    .actions { margin-top: 14px; }
-    .actions .btn, .dock .btn {
-      background: var(--cream);
-      border-color: var(--cream);
+    .btn:active { background: rgba(231, 246, 244, 0.08); }
+    .btn-solid, .dock .btn {
+      background: #c9f4ee;
+      border-color: #c9f4ee;
       color: var(--ink);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 13px;
     }
-    .actions .btn:hover, .dock .btn:hover { background: #fffaf2; }
+    .btn-solid:hover, .dock .btn:hover { background: #e9fffc; border-color: #e9fffc; }
+    .hero-actions { justify-content: center; margin-top: 28px; }
     .hero {
-      display: grid;
-      grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
-      gap: clamp(28px, 5vw, 64px);
-      align-items: center;
-      padding: 36px 0 72px;
+      padding: 56px 0 20px;
+      text-align: center;
     }
-    .hero > * { min-width: 0; }
     .portrait {
+      margin: 48px 0 0;
       border: 1px solid var(--line);
     }
     .kicker, .ticker {
       margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
       color: var(--gold);
       font-size: 12px;
       font-weight: 500;
       letter-spacing: 0.22em;
       text-transform: uppercase;
     }
-    h1 {
-      margin: 8px 0 0;
-      font-family: Fraunces, Georgia, serif;
-      font-weight: 460;
-      font-size: clamp(46px, 7vw, 88px);
-      line-height: 0.92;
-      letter-spacing: -0.035em;
-      text-wrap: balance;
+    .kicker::before, .kicker::after {
+      content: "";
+      width: 42px;
+      height: 1px;
+      background: var(--line);
     }
-    .ticker { margin-top: 18px; }
+    .pulse {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--ember);
+      box-shadow: 0 0 0 4px rgba(232, 132, 58, 0.22);
+    }
+    h1 {
+      margin: 18px auto 0;
+      max-width: 16ch;
+      font-family: Outfit, "Segoe UI", sans-serif;
+      font-weight: 700;
+      font-size: clamp(44px, 7.4vw, 92px);
+      line-height: 0.92;
+      letter-spacing: -0.045em;
+      text-transform: uppercase;
+      text-wrap: balance;
+      background: linear-gradient(180deg, #f4fffd 10%, #8fe3db 62%, #e8843a 130%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
     .ca {
       display: grid;
       gap: 6px;
       width: 100%;
       max-width: 28rem;
-      margin: 16px 0 0;
+      margin: 28px auto 0;
       padding: 12px 14px;
       border: 1px solid var(--line);
       background: transparent;
@@ -186,73 +223,182 @@
       color: var(--cream);
     }
     .lede {
-      margin: 14px 0 0;
-      max-width: 28rem;
+      margin: 22px auto 0;
+      max-width: 38rem;
       color: var(--muted);
       font-size: 18px;
     }
+    .gallery, .chart, .listen { scroll-margin-top: 88px; }
     .gallery { padding: 0 0 36px; }
-    .listen { padding: 8px 0 48px; }
-    .listen h2 {
-      margin: 0 0 14px;
-      font-family: Outfit, "Segoe UI", sans-serif;
+    .chart { padding: 8px 0 48px; }
+    .chart-frame {
+      position: relative;
+      width: 100%;
+      height: min(70vh, 620px);
+      min-height: 460px;
+      border: 1px solid var(--line);
+      background: #0c2430;
+    }
+    .chart-frame iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #0c2430;
+    }
+    .chart-note {
+      margin: 12px 0 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .chart-note a { color: var(--gold); text-decoration: none; }
+    .chart-note a:hover { color: var(--cream); }
+    .listen { padding: 8px 0 64px; }
+    .album {
+      display: grid;
+      grid-template-columns: minmax(220px, 340px) minmax(0, 1fr);
+      gap: 28px 40px;
+      align-items: center;
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 22px;
+      border: 1px solid var(--line);
+      background: rgba(6, 32, 39, 0.45);
+    }
+    .sleeve {
+      margin: 0;
+      aspect-ratio: 1;
+      border: 1px solid var(--line);
+      background: #062027;
+    }
+    .sleeve img {
+      width: 100%;
+      height: 100%;
+      max-width: none;
+      object-fit: contain;
+      background: transparent;
+    }
+    .album-artist {
+      margin: 0;
+      color: var(--gold);
       font-size: 12px;
       font-weight: 500;
-      letter-spacing: 0.2em;
+      letter-spacing: 0.22em;
       text-transform: uppercase;
-      color: var(--muted);
     }
-    .player {
-      display: grid;
-      grid-template-columns: auto minmax(0, 1fr);
-      gap: 16px 20px;
+    .album-title {
+      margin: 8px 0 0;
+      font-family: Fraunces, Georgia, serif;
+      font-size: clamp(36px, 4vw, 52px);
+      font-weight: 460;
+      letter-spacing: -0.03em;
+      line-height: 0.95;
+    }
+    .now-playing {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 16px;
+    }
+    .album-transport {
+      display: flex;
       align-items: center;
-      max-width: 36rem;
-      padding: 16px;
-      border: 1px solid var(--line);
+      gap: 16px;
+      margin-top: 18px;
     }
     .play-toggle {
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      background: var(--cream);
-      border-color: var(--cream);
+      min-width: 108px;
+      min-height: 48px;
+      padding: 0 22px;
+      border: 1px solid #c9f4ee;
+      border-radius: 999px;
+      background: #c9f4ee;
       color: var(--ink);
       font-family: inherit;
       font-size: 13px;
-      font-weight: 500;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
       cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
-    .play-toggle:hover { background: #fffaf2; }
-    .now-title {
-      margin: 4px 0 0;
-      font-family: Fraunces, Georgia, serif;
-      font-size: 28px;
-      font-weight: 460;
-      letter-spacing: -0.03em;
-      line-height: 1.1;
-    }
+    .play-toggle:hover { background: #e9fffc; border-color: #e9fffc; }
     .now-time {
-      margin: 6px 0 0;
-      color: var(--muted);
-      font-size: 13px;
+      margin: 0;
+      color: var(--cream);
+      font-size: 14px;
       font-variant-numeric: tabular-nums;
     }
-    .tracks {
-      grid-column: 1 / -1;
-      list-style: none;
+    .scrub { display: block; margin: 14px 0 0; }
+    .scrub input {
+      -webkit-appearance: none;
+      appearance: none;
+      display: block;
+      width: 100%;
+      height: 32px;
       margin: 0;
-      padding: 0;
-      border-top: 1px solid var(--line);
+      background: transparent;
+      cursor: pointer;
     }
+    .scrub input::-webkit-slider-runnable-track {
+      height: 3px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--ember) var(--p, 0%), rgba(127, 212, 203, 0.28) var(--p, 0%));
+    }
+    .scrub input::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      margin-top: -6.5px;
+      border: 0;
+      border-radius: 50%;
+      background: var(--cream);
+    }
+    .scrub input::-moz-range-track {
+      height: 3px;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(127, 212, 203, 0.28);
+    }
+    .scrub input::-moz-range-progress {
+      height: 3px;
+      border-radius: 999px;
+      background: var(--ember);
+    }
+    .scrub input::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border: 0;
+      border-radius: 50%;
+      background: var(--cream);
+    }
+    .side {
+      margin: 20px 0 0;
+      color: var(--gold);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+    .tracks {
+      list-style: none;
+      margin: 8px 0 0;
+      padding: 0;
+    }
+    .tracks li + li { border-top: 1px solid var(--line); }
     .track {
-      display: flex;
+      display: grid;
+      grid-template-columns: 2rem minmax(0, 1fr) auto;
+      gap: 12px;
       align-items: center;
       width: 100%;
-      min-height: 48px;
-      padding: 0 2px;
+      min-height: 52px;
+      padding: 0 8px;
       border: 0;
-      border-bottom: 1px solid var(--line);
       background: transparent;
       color: var(--cream);
       font-family: inherit;
@@ -263,16 +409,24 @@
       -webkit-tap-highlight-color: transparent;
     }
     .track:hover { color: var(--gold); }
-    .track[aria-pressed="true"] { color: var(--gold); }
-    .track span { margin-right: 12px; color: var(--muted); font-size: 12px; letter-spacing: 0.12em; }
-    .gallery h2 {
-      margin: 0 0 14px;
-      font-family: Outfit, "Segoe UI", sans-serif;
-      font-size: 12px;
-      font-weight: 500;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
+    .track[aria-pressed="true"] { background: rgba(127, 212, 203, 0.1); }
+    .track-no, .track-len {
       color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+    .track-no { font-size: 12px; letter-spacing: 0.12em; }
+    .track-name { min-width: 0; }
+    .track-len { font-size: 13px; }
+    .track[aria-pressed="true"] .track-no { color: var(--ember); }
+    .gallery h2, .listen h2, .chart h2 {
+      margin: 0 0 22px;
+      font-family: Outfit, "Segoe UI", sans-serif;
+      font-size: clamp(32px, 5vw, 56px);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      text-transform: uppercase;
+      text-align: center;
+      color: var(--cream);
     }
     .frames {
       display: grid;
@@ -289,15 +443,15 @@
     }
     footer p { margin: 0; max-width: 46rem; overflow-wrap: anywhere; }
     .dock { display: none; }
+    @media (max-width: 1040px) {
+      .nav { gap: 4px 12px; }
+      .nav-link { letter-spacing: 0.08em; font-size: 12px; }
+      .brand { letter-spacing: 0.1em; font-size: 13px; }
+    }
     @media (max-width: 800px) {
-      .nav, .actions { display: none; }
-      .hero {
-        grid-template-columns: 1fr;
-        gap: 22px;
-        padding: 18px 0 28px;
-      }
-      .hero figure { order: -1; }
-      .gallery h2 { display: none; }
+      .nav, .header-cta { display: none; }
+      .hero { padding: 28px 0 12px; }
+      h1 { font-size: clamp(40px, 12vw, 64px); }
       .swipe {
         display: block;
         margin: 0 0 10px;
@@ -335,7 +489,7 @@
         bottom: 0;
         z-index: 6;
         padding: 10px var(--pad-r) calc(10px + env(safe-area-inset-bottom)) var(--pad);
-        background: rgba(12, 11, 10, 0.94);
+        background: rgba(7, 20, 28, 0.94);
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
         border-top: 1px solid var(--line);
@@ -346,11 +500,18 @@
         font-size: 13px;
         white-space: nowrap;
       }
+      .album {
+        grid-template-columns: 1fr;
+        gap: 18px;
+        padding: 14px;
+      }
+      .sleeve { width: min(100%, 420px); margin: 0 auto; }
+      .album-title { font-size: 40px; }
       footer { padding-bottom: calc(88px + env(safe-area-inset-bottom)); }
     }
     @media (max-width: 360px) {
       .dock .btn { font-size: 12px; letter-spacing: 0; }
-      h1 { font-size: 42px; }
+      h1 { font-size: 36px; }
     }
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
@@ -363,35 +524,45 @@
     <header>
       <a class="brand" href="./"><img src="assets/mark.jpg" width="600" height="600" alt="">Whaleoween</a>
       <nav class="nav" aria-label="Whaleoween links">
-        <a class="btn" href="play/">Play</a>
-        <a class="btn" href="https://dexscreener.com/solana/9hv1i7xafDRDV6nEWtFZvqWYN19m6GThc2dSnZaEpump" target="_blank" rel="noopener noreferrer">Dexscreener<span class="sr"> (opens in a new tab)</span></a>
-        <a class="btn" href="https://x.com/i/communities/2011205966444847116" target="_blank" rel="noopener noreferrer">X<span class="sr"> (opens in a new tab)</span></a>
-        <a class="btn" href="https://t.me/getreadygo12" target="_blank" rel="noopener noreferrer">Telegram<span class="sr"> (opens in a new tab)</span></a>
+        <a class="nav-link" href="play/">Play</a>
+        <a class="nav-link" href="#night">The night</a>
+        <a class="nav-link" href="#listen">Listen</a>
+        <a class="nav-link" href="#chart">Chart</a>
+        <a class="nav-link" href="https://x.com/i/communities/2011205966444847116" target="_blank" rel="noopener noreferrer">X<span class="sr"> (opens in a new tab)</span></a>
+        <a class="nav-link" href="https://t.me/getreadygo12" target="_blank" rel="noopener noreferrer">Telegram<span class="sr"> (opens in a new tab)</span></a>
       </nav>
+      <a class="btn btn-solid header-cta" href="https://dexscreener.com/solana/9hv1i7xafDRDV6nEWtFZvqWYN19m6GThc2dSnZaEpump" target="_blank" rel="noopener noreferrer">Find $WHALEOWEEN<span class="sr"> (opens in a new tab)</span></a>
     </header>
     <main>
       <section class="hero">
-        <div class="copy">
-          <p class="kicker">Solana</p>
-          <h1>Whaleoween</h1>
-          <p class="ticker">$WHALEOWEEN</p>
-          <button class="ca" type="button" id="copy-ca" data-ca="9hv1i7xafDRDV6nEWtFZvqWYN19m6GThc2dSnZaEpump">
-            <span class="ca-label" id="ca-label">Contract</span>
-            <code>9hv1i7xafDRDV6nEWtFZvqWYN19m6GThc2dSnZaEpump</code>
-          </button>
-          <p class="lede">The whale who keeps Halloween. A memecoin for the long night.</p>
-          <p class="play-row"><a class="btn" href="play/">Play the night</a></p>
-          <div class="actions">
-            <a class="btn" href="https://dexscreener.com/solana/9hv1i7xafDRDV6nEWtFZvqWYN19m6GThc2dSnZaEpump" target="_blank" rel="noopener noreferrer">Dexscreener<span class="sr"> (opens in a new tab)</span></a>
-            <a class="btn" href="https://x.com/i/communities/2011205966444847116" target="_blank" rel="noopener noreferrer">X<span class="sr"> (opens in a new tab)</span></a>
-            <a class="btn" href="https://t.me/getreadygo12" target="_blank" rel="noopener noreferrer">Telegram<span class="sr"> (opens in a new tab)</span></a>
-          </div>
+        <p class="kicker"><span class="pulse" aria-hidden="true"></span>Solana · The long night</p>
+        <h1>The whale who keeps Halloween</h1>
+        <p class="lede">A memecoin for the long night. Candy in the bucket. A vigil under the moon.</p>
+        <div class="hero-actions">
+          <a class="btn btn-solid" href="https://dexscreener.com/solana/9hv1i7xafDRDV6nEWtFZvqWYN19m6GThc2dSnZaEpump" target="_blank" rel="noopener noreferrer">Find $WHALEOWEEN<span class="sr"> (opens in a new tab)</span></a>
+          <a class="btn" href="play/">Play the night</a>
         </div>
+        <button class="ca" type="button" id="copy-ca" data-ca="9hv1i7xafDRDV6nEWtFZvqWYN19m6GThc2dSnZaEpump">
+          <span class="ca-label" id="ca-label">Contract</span>
+          <code>9hv1i7xafDRDV6nEWtFZvqWYN19m6GThc2dSnZaEpump</code>
+        </button>
         <figure class="portrait">
           <img src="assets/street.jpg" width="1168" height="784" alt="A small grey whale in a brown fedora and a torn red-and-green striped sweater walks a wet Halloween street, holding a pumpkin bucket of candy, with a metal claw on the other hand.">
         </figure>
       </section>
-      <section class="gallery" aria-label="Selected frames">
+      <section class="chart" id="chart" aria-label="Live price chart">
+        <h2>The chart</h2>
+        <div class="chart-frame">
+          <iframe
+            title="Live Whaleoween chart on Dexscreener"
+            src="https://dexscreener.com/solana/FAEM12aTLb3YXH946FTX63atDGiKEtoSWKXRZYHbB3fn?embed=1&amp;loadChartSettings=0&amp;trades=0&amp;tabs=0&amp;info=0&amp;chartLeftToolbar=0&amp;chartDefaultOnMobile=1&amp;chartTheme=dark&amp;theme=dark&amp;chartStyle=0&amp;chartType=usd&amp;interval=15"
+            loading="lazy"
+            allow="clipboard-write"
+          ></iframe>
+        </div>
+        <p class="chart-note"><a href="https://dexscreener.com/solana/FAEM12aTLb3YXH946FTX63atDGiKEtoSWKXRZYHbB3fn" target="_blank" rel="noopener noreferrer">Open on Dexscreener<span class="sr"> (opens in a new tab)</span></a></p>
+      </section>
+      <section class="gallery" id="night" aria-label="Selected frames">
         <h2>The night</h2>
         <p class="swipe">Swipe the frames</p>
         <div class="frames">
@@ -406,29 +577,58 @@
           </figure>
         </div>
       </section>
-      <section class="listen" id="listen" aria-label="Playlist">
+      <section class="listen" id="listen" aria-label="Album">
         <h2>Listen</h2>
-        <div class="player">
-          <button class="play-toggle" type="button" id="play-toggle" aria-label="Play Halloween Whale">Play</button>
-          <div class="now">
-            <p class="kicker" id="now-kicker">Now playing</p>
-            <p class="now-title" id="now-title">Halloween Whale</p>
-            <p class="now-time" id="now-time">0:00</p>
+        <div class="album">
+          <figure class="sleeve">
+            <img src="assets/mark.jpg" width="600" height="600" alt="Whaleoween, an armored whale holding a glowing jack-o'-lantern.">
+          </figure>
+          <div class="sleeve-notes">
+            <p class="album-artist">Whaleoween</p>
+            <h3 class="album-title">The Long Night</h3>
+            <p class="now-playing" id="now-playing">Halloween Whale</p>
+            <div class="album-transport">
+              <button class="play-toggle" type="button" id="play-toggle" aria-label="Play Halloween Whale">Play</button>
+              <p class="now-time" id="now-time">0:00</p>
+            </div>
+            <label class="scrub">
+              <span class="sr">Seek within the track</span>
+              <input id="scrub" type="range" min="0" max="1000" value="0" step="1">
+            </label>
+            <p class="side">Side A</p>
+            <ol class="tracks">
+              <li>
+                <button class="track" type="button" data-src="assets/halloween-whale.mp3" data-title="Halloween Whale" aria-pressed="true">
+                  <span class="track-no">01</span>
+                  <span class="track-name">Halloween Whale</span>
+                  <span class="track-len"></span>
+                </button>
+              </li>
+              <li>
+                <button class="track" type="button" data-src="assets/whale-o-ween.mp3" data-title="Whale-o-ween" aria-pressed="false">
+                  <span class="track-no">02</span>
+                  <span class="track-name">Whale-o-ween</span>
+                  <span class="track-len"></span>
+                </button>
+              </li>
+              <li>
+                <button class="track" type="button" data-src="assets/the-deep-is-awake.mp3" data-title="The Deep Is Awake" aria-pressed="false">
+                  <span class="track-no">03</span>
+                  <span class="track-name">The Deep Is Awake</span>
+                  <span class="track-len"></span>
+                </button>
+              </li>
+              <li>
+                <button class="track" type="button" data-src="assets/halloween-tide.mp3" data-title="Halloween Tide" aria-pressed="false">
+                  <span class="track-no">04</span>
+                  <span class="track-name">Halloween Tide</span>
+                  <span class="track-len"></span>
+                </button>
+              </li>
+            </ol>
           </div>
-          <ol class="tracks">
-            <li>
-              <button class="track" type="button" data-src="assets/halloween-whale.mp3" data-title="Halloween Whale" aria-pressed="true">
-                <span>01</span>Halloween Whale
-              </button>
-            </li>
-            <li>
-              <button class="track" type="button" data-src="assets/whale-o-ween.mp3" data-title="Whale-o-ween" aria-pressed="false">
-                <span>02</span>Whale-o-ween
-              </button>
-            </li>
-          </ol>
         </div>
-        <audio id="player" preload="none" src="assets/halloween-whale.mp3"></audio>
+        <audio id="player" preload="metadata" src="assets/halloween-whale.mp3"></audio>
       </section>
     </main>
     <footer>
@@ -473,10 +673,12 @@
     (function () {
       var audio = document.getElementById("player");
       var toggle = document.getElementById("play-toggle");
-      var title = document.getElementById("now-title");
+      var now = document.getElementById("now-playing");
       var time = document.getElementById("now-time");
+      var scrub = document.getElementById("scrub");
       var tracks = Array.prototype.slice.call(document.querySelectorAll(".track"));
       var index = 0;
+      var scrubbing = false;
 
       function clock(seconds) {
         if (!isFinite(seconds)) return "0:00";
@@ -487,16 +689,20 @@
 
       function paint() {
         var current = tracks[index];
-        title.textContent = current.getAttribute("data-title");
+        var name = current.getAttribute("data-title");
+        now.textContent = name;
         tracks.forEach(function (button, i) {
           button.setAttribute("aria-pressed", i === index ? "true" : "false");
         });
         var playing = !audio.paused && !audio.ended;
         toggle.textContent = playing ? "Pause" : "Play";
-        toggle.setAttribute("aria-label", (playing ? "Pause " : "Play ") + current.getAttribute("data-title"));
+        toggle.setAttribute("aria-label", (playing ? "Pause " : "Play ") + name);
         var elapsed = clock(audio.currentTime);
         var total = audio.duration ? " / " + clock(audio.duration) : "";
         time.textContent = elapsed + total;
+        var ratio = audio.duration ? audio.currentTime / audio.duration : 0;
+        if (!scrubbing) scrub.value = String(Math.round(ratio * 1000));
+        scrub.style.setProperty("--p", (Number(scrub.value) / 10) + "%");
       }
 
       function load(next) {
@@ -522,6 +728,22 @@
           if (index !== i) load(i);
           audio.play();
         });
+        var probe = document.createElement("audio");
+        probe.preload = "metadata";
+        probe.src = button.getAttribute("data-src");
+        probe.addEventListener("loadedmetadata", function () {
+          var slot = button.querySelector(".track-len");
+          if (slot) slot.textContent = clock(probe.duration);
+        });
+      });
+
+      scrub.addEventListener("pointerdown", function () { scrubbing = true; });
+      scrub.addEventListener("pointerup", function () { scrubbing = false; paint(); });
+      scrub.addEventListener("pointercancel", function () { scrubbing = false; paint(); });
+      scrub.addEventListener("input", function () {
+        scrub.style.setProperty("--p", (Number(scrub.value) / 10) + "%");
+        if (!audio.duration) return;
+        audio.currentTime = (Number(scrub.value) / 1000) * audio.duration;
       });
 
       audio.addEventListener("play", paint);

@@ -1,12 +1,12 @@
 :root {
-  --bg: #0c0b0a;
-  --fg: #f6f1e8;
-  --cream: #f6f1e8;
-  --muted: #b7b1a6;
-  --gold: #c4a574;
-  --accent: #c4a574;
-  --ink: #161412;
-  --line: rgba(246, 241, 232, 0.16);
+  --bg: #07141c;
+  --fg: #e7f6f4;
+  --cream: #e7f6f4;
+  --muted: #8fadb3;
+  --gold: #7fd4cb;
+  --accent: #e8843a;
+  --ink: #062027;
+  --line: rgba(127, 212, 203, 0.22);
   --pumpkin: #e07a22;
   --candy: #f0d7a2;
   --curse: #d45b6a;
@@ -27,7 +27,8 @@ html {
 body {
   margin: 0;
   background:
-    radial-gradient(900px 420px at 80% -10%, rgba(196, 165, 116, 0.09), transparent 55%),
+    radial-gradient(820px 440px at 50% -12%, rgba(127, 212, 203, 0.16), transparent 58%),
+    radial-gradient(520px 360px at 100% 8%, rgba(232, 132, 58, 0.1), transparent 55%),
     var(--bg);
   color: var(--cream);
   font-family: var(--font-body);
@@ -75,6 +76,7 @@ header {
   justify-content: space-between;
   gap: 16px 24px;
   padding: max(14px, env(safe-area-inset-top)) 0 14px;
+  border-bottom: 1px solid var(--line);
 }
 
 .brand {
@@ -82,10 +84,11 @@ header {
   align-items: center;
   gap: 10px;
   min-width: 0;
-  font-family: Fraunces, Georgia, serif;
-  font-weight: 560;
-  font-size: 22px;
-  letter-spacing: -0.03em;
+  font-family: Outfit, "Segoe UI", sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
   text-decoration: none;
   color: inherit;
 }
@@ -96,6 +99,7 @@ header {
   flex: 0 0 auto;
   object-fit: contain;
   background: transparent;
+  border: 1px solid var(--line);
 }
 
 .nav { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -173,8 +177,8 @@ footer p { margin: 0; max-width: 46rem; overflow-wrap: anywhere; }
   position: relative;
   border: 1px solid var(--line);
   background:
-    radial-gradient(ellipse 50% 40% at 80% 10%, rgba(196, 165, 116, 0.14), transparent 55%),
-    linear-gradient(180deg, #161412 0%, #0c0b0a 100%);
+    radial-gradient(ellipse 50% 40% at 80% 10%, rgba(127, 212, 203, 0.16), transparent 55%),
+    linear-gradient(180deg, #0c2430 0%, #07141c 100%);
   overflow: hidden;
   aspect-ratio: 900 / 560;
   touch-action: none;
@@ -203,7 +207,7 @@ footer p { margin: 0; max-width: 46rem; overflow-wrap: anywhere; }
   padding: 0.75rem 1rem;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  background: linear-gradient(180deg, rgba(12, 11, 10, 0.78), rgba(12, 11, 10, 0.92));
+  background: linear-gradient(180deg, rgba(7, 20, 28, 0.72), rgba(7, 20, 28, 0.88));
 }
 
 .game-overlay[hidden],
@@ -236,8 +240,22 @@ footer p { margin: 0; max-width: 46rem; overflow-wrap: anywhere; }
   color: var(--gold);
 }
 
+.worlds {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 14px;
+  list-style: none;
+  margin: 0 0 0.85rem;
+  padding: 0;
+  color: var(--gold);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
 .game-lede {
-  margin: 0 auto 1rem;
+  margin: 0 auto 0.7rem;
   max-width: 34ch;
   color: var(--muted);
   font-size: 0.95rem;
@@ -262,7 +280,7 @@ footer p { margin: 0; max-width: 46rem; overflow-wrap: anywhere; }
 .char-option {
   appearance: none;
   border: 1px solid rgba(246, 241, 232, 0.14);
-  background: #12110f;
+  background: #0c2430;
   color: var(--fg);
   min-height: 48px;
   padding: 0.55rem 0.35rem 0.5rem;
@@ -422,8 +440,6 @@ footer p { margin: 0; max-width: 46rem; overflow-wrap: anywhere; }
 }
 
 .game-pause-btn,
-.game-mute,
-.game-music,
 .game-quality {
   position: absolute;
   z-index: 5;
@@ -445,8 +461,28 @@ footer p { margin: 0; max-width: 46rem; overflow-wrap: anywhere; }
 }
 
 .game-pause-btn { top: 0.55rem; left: 0.55rem; }
-.game-mute { top: 0.55rem; right: 0.55rem; z-index: 7; }
-.game-music { top: 3.7rem; right: 0.55rem; z-index: 7; }
+.game-audio {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+.game-mute,
+.game-music {
+  appearance: none;
+  border: 1px solid rgba(196, 165, 116, 0.4);
+  background: rgba(12, 11, 10, 0.72);
+  color: var(--cream);
+  font-family: var(--font-body);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  min-height: 24px;
+  padding: 0 0.4rem;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
 .game-music[aria-pressed="true"] {
   color: var(--gold);
   border-color: var(--gold);
@@ -477,8 +513,8 @@ footer p { margin: 0; max-width: 46rem; overflow-wrap: anywhere; }
   .game-hint { display: none; }
   .game-touch-hint:not([hidden]) { display: block; text-align: center; }
   .game-hud {
-    top: 7.6rem;
-    width: min(calc(100% - 1rem), 420px);
+    top: 0.55rem;
+    width: min(calc(100% - 8rem), 420px);
   }
   .nav .btn { min-height: 44px; padding: 0 12px; }
 }
