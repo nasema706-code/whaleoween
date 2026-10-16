@@ -304,6 +304,7 @@ function initTreatHunt(canvas) {
   let lastTs = 0;
   let spawnTimer = 0;
   let rafId = 0;
+  let previewId = 0;
   let muted = localStorage.getItem("whaleoween-treat-hunt-muted") === "1";
   let musicOn = localStorage.getItem("whaleoween-treat-hunt-music") === "1";
   let lastTickSecond = -1;
@@ -331,11 +332,9 @@ function initTreatHunt(canvas) {
   if (!QUALITY_MODES.includes(qualityMode)) qualityMode = "auto";
 
   function detectAutoTier() {
-    const cores = navigator.hardwareConcurrency || 4;
+    const cores = navigator.hardwareConcurrency || 8;
     const mem = Number(navigator.deviceMemory) || 4;
-    const dpr = window.devicePixelRatio || 1;
-    if (prefersTouch && (cores <= 4 || mem <= 2 || dpr >= 3)) return "low";
-    if (prefersTouch && cores <= 6) return "medium";
+    if (mem <= 2 && cores <= 4) return "medium";
     return "high";
   }
 
@@ -351,31 +350,34 @@ function initTreatHunt(canvas) {
         tier: "high",
         dprCap: 2,
         maxDrops: 28,
-        maxParticles: 90,
+        maxParticles: 120,
         particleMul: 1,
         bgMotion: true,
         shadows: true,
         glow: true,
+        waveStep: 8,
       },
       medium: {
         tier: "medium",
-        dprCap: 1.75,
-        maxDrops: 18,
-        maxParticles: 42,
-        particleMul: 0.65,
+        dprCap: 2,
+        maxDrops: 22,
+        maxParticles: 70,
+        particleMul: 0.8,
         bgMotion: true,
         shadows: true,
-        glow: false,
+        glow: true,
+        waveStep: 12,
       },
       low: {
         tier: "low",
-        dprCap: 1.25,
-        maxDrops: 12,
-        maxParticles: 22,
-        particleMul: 0.4,
-        bgMotion: false,
+        dprCap: 1.5,
+        maxDrops: 14,
+        maxParticles: 36,
+        particleMul: 0.5,
+        bgMotion: true,
         shadows: false,
         glow: false,
+        waveStep: 18,
       },
     };
     return presets[tier] || presets.high;
@@ -538,27 +540,128 @@ function initTreatHunt(canvas) {
     let songGain = null;
     let songGen = 0;
     let songSources = [];
-    // Original night-hunt loop in D minor. Layers come in as the worlds get deeper.
-    const MELODY = [
-      [0, 0, 0, 2], [0, 2, 3, 1], [0, 3, 7, 1], [0, 4, 3, 2], [0, 6, 2, 1], [0, 7, 0, 1],
-      [1, 0, 7, 2], [1, 2, 5, 1], [1, 3, 3, 1], [1, 4, 2, 2], [1, 6, 0, 2],
-      [2, 0, 8, 2], [2, 2, 7, 1], [2, 3, 5, 1], [2, 4, 3, 2], [2, 6, 7, 2],
-      [3, 0, 5, 1], [3, 1, 3, 1], [3, 2, 2, 2], [3, 4, 0, 2], [3, 6, -2, 1], [3, 7, 0, 1],
-      [4, 0, 12, 2], [4, 2, 10, 1], [4, 3, 8, 1], [4, 4, 7, 2], [4, 6, 5, 2],
-      [5, 0, 3, 2], [5, 2, 5, 1], [5, 3, 7, 1], [5, 4, 8, 2], [5, 6, 7, 2],
-      [6, 0, 10, 2], [6, 2, 8, 1], [6, 3, 7, 1], [6, 4, 5, 2], [6, 6, 3, 2],
-      [7, 0, 2, 1], [7, 1, 3, 1], [7, 2, 2, 1], [7, 3, 0, 1], [7, 4, -2, 2], [7, 6, 0, 2],
-    ];
-    const BASS = [73.42, 73.42, 116.54, 87.31, 98.0, 116.54, 130.81, 110.0];
-    const CHAINS = [
-      [146.83, 174.61, 220],
-      [146.83, 174.61, 220],
-      [233.08, 293.66, 349.23],
-      [174.61, 220, 261.63],
-      [196, 233.08, 293.66],
-      [233.08, 293.66, 349.23],
-      [261.63, 329.63, 392],
-      [220, 261.63, 329.63],
+    // Original loops, one per world. Short hooks, a kick, and a clap.
+    const SONGS = [
+      {
+        tempo: 114,
+        root: 220,
+        lead: "square",
+        leadGain: 0.072,
+        cut: 2600,
+        bass: [110, 110, 82.41, 73.42],
+        chords: [
+          [220, 261.63, 329.63],
+          [220, 261.63, 329.63],
+          [164.81, 196, 246.94],
+          [196, 246.94, 293.66],
+        ],
+        kicks: [0, 4],
+        claps: [4],
+        hats: [2, 6],
+        melody: [
+          [0, 0, 12, 2], [0, 2, 15, 1], [0, 3, 19, 1], [0, 4, 15, 2], [0, 6, 12, 2],
+          [1, 0, 10, 1], [1, 1, 7, 1], [1, 2, 5, 2], [1, 4, 7, 2], [1, 6, 12, 2],
+          [2, 0, 12, 1], [2, 1, 15, 1], [2, 2, 19, 1], [2, 3, 22, 1], [2, 4, 19, 2], [2, 6, 15, 2],
+          [3, 0, 12, 2], [3, 2, 7, 1], [3, 3, 5, 1], [3, 4, 7, 2], [3, 6, 12, 2],
+        ],
+      },
+      {
+        tempo: 128,
+        root: 220,
+        lead: "square",
+        leadGain: 0.08,
+        cut: 3000,
+        drive: true,
+        harmony: 2,
+        bass: [110, 110, 87.31, 82.41],
+        chords: [
+          [220, 261.63, 329.63],
+          [174.61, 220, 261.63],
+          [174.61, 220, 261.63],
+          [164.81, 196, 246.94],
+        ],
+        kicks: [0, 2, 4, 6],
+        claps: [2, 6],
+        hats: [1, 3, 5, 7],
+        melody: [
+          [0, 0, 19, 1], [0, 1, 22, 1], [0, 2, 24, 2], [0, 4, 22, 1], [0, 5, 19, 1], [0, 6, 15, 2],
+          [1, 0, 12, 1], [1, 1, 15, 1], [1, 2, 19, 1], [1, 3, 22, 1], [1, 4, 24, 2], [1, 6, 27, 2],
+          [2, 0, 24, 1], [2, 1, 22, 1], [2, 2, 19, 1], [2, 3, 15, 1], [2, 4, 19, 2], [2, 6, 22, 2],
+          [3, 0, 27, 1], [3, 1, 24, 1], [3, 2, 22, 1], [3, 3, 19, 1], [3, 4, 15, 2], [3, 6, 12, 2],
+        ],
+      },
+      {
+        tempo: 122,
+        root: 146.83,
+        lead: "square",
+        leadGain: 0.074,
+        cut: 2800,
+        harmony: 1.5,
+        bass: [73.42, 73.42, 110, 98],
+        chords: [
+          [146.83, 185, 220],
+          [146.83, 185, 220],
+          [110, 138.59, 164.81],
+          [98, 123.47, 146.83],
+        ],
+        kicks: [0, 2, 4, 6],
+        claps: [4],
+        hats: [1, 3, 5, 7],
+        melody: [
+          [0, 0, 12, 1], [0, 1, 16, 1], [0, 2, 19, 2], [0, 4, 19, 1], [0, 5, 16, 1], [0, 6, 12, 2],
+          [1, 0, 17, 1], [1, 1, 16, 1], [1, 2, 14, 1], [1, 3, 12, 1], [1, 4, 16, 2], [1, 6, 19, 2],
+          [2, 0, 12, 1], [2, 1, 16, 1], [2, 2, 19, 1], [2, 3, 24, 1], [2, 4, 19, 2], [2, 6, 16, 2],
+          [3, 0, 14, 1], [3, 1, 12, 1], [3, 2, 16, 2], [3, 4, 12, 2], [3, 6, 7, 2],
+        ],
+      },
+      {
+        tempo: 118,
+        root: 164.81,
+        lead: "sawtooth",
+        leadGain: 0.05,
+        cut: 1500,
+        bass: [82.41, 82.41, 65.41, 61.74],
+        chords: [
+          [164.81, 196, 246.94],
+          [164.81, 196, 246.94],
+          [130.81, 155.56, 196],
+          [123.47, 146.83, 185],
+        ],
+        kicks: [0, 3, 4, 6],
+        claps: [2, 6],
+        hats: [1, 3, 5, 7],
+        melody: [
+          [0, 0, 12, 1], [0, 1, 15, 1], [0, 2, 19, 2], [0, 4, 15, 1], [0, 5, 12, 1], [0, 6, 10, 2],
+          [1, 0, 8, 1], [1, 1, 10, 1], [1, 2, 12, 2], [1, 4, 15, 2], [1, 6, 12, 2],
+          [2, 0, 12, 1], [2, 2, 19, 1], [2, 3, 22, 1], [2, 4, 19, 2], [2, 6, 15, 2],
+          [3, 0, 10, 2], [3, 2, 8, 1], [3, 3, 7, 1], [3, 4, 12, 2], [3, 6, 12, 2],
+        ],
+      },
+      {
+        tempo: 134,
+        root: 220,
+        lead: "square",
+        leadGain: 0.078,
+        cut: 3400,
+        drive: true,
+        harmony: 2,
+        bass: [110, 87.31, 82.41, 73.42],
+        chords: [
+          [220, 261.63, 329.63],
+          [174.61, 220, 261.63],
+          [164.81, 207.65, 246.94],
+          [146.83, 185, 220],
+        ],
+        kicks: [0, 2, 4, 6],
+        claps: [2, 4, 6],
+        hats: [1, 3, 5, 7],
+        melody: [
+          [0, 0, 12, 1], [0, 1, 15, 1], [0, 2, 19, 1], [0, 3, 24, 1], [0, 4, 19, 1], [0, 5, 15, 1], [0, 6, 19, 1], [0, 7, 24, 1],
+          [1, 0, 15, 1], [1, 1, 19, 1], [1, 2, 22, 1], [1, 3, 27, 1], [1, 4, 22, 1], [1, 5, 19, 1], [1, 6, 15, 1], [1, 7, 12, 1],
+          [2, 0, 12, 2], [2, 2, 19, 2], [2, 4, 24, 2], [2, 6, 27, 2],
+          [3, 0, 24, 1], [3, 1, 22, 1], [3, 2, 19, 1], [3, 3, 15, 1], [3, 4, 12, 2], [3, 6, 7, 2],
+        ],
+      },
     ];
 
     function ensure() {
@@ -765,12 +868,12 @@ function initTreatHunt(canvas) {
           songGain.gain.setValueAtTime(Math.max(0.0001, songGain.gain.value), now);
           songGain.gain.linearRampToValueAtTime(1, now + 0.45);
 
-          const tempo = [92, 96, 104, 100, 86][level];
+          const song = SONGS[level];
+          const tempo = song.tempo;
           const eighth = 60 / tempo / 2;
           const bar = eighth * 8;
-          const loop = bar * 8;
-          const deep = level >= 4;
-          const note = (semi) => 293.66 * Math.pow(2, semi / 12);
+          const loop = bar * 4;
+          const note = (semi) => song.root * Math.pow(2, semi / 12);
 
           const voice = (freq, dur, type, gain, when, opts = {}) => {
             if (gen !== songGen || !songGain || freq <= 0) return;
@@ -783,7 +886,7 @@ function initTreatHunt(canvas) {
               osc.frequency.exponentialRampToValueAtTime(Math.max(30, opts.slide), when + dur);
             }
             filter.type = "lowpass";
-            filter.frequency.setValueAtTime(opts.cut || (deep ? 900 : 2200), when);
+            filter.frequency.setValueAtTime(opts.cut || 2200, when);
             g.gain.setValueAtTime(0.0001, when);
             g.gain.exponentialRampToValueAtTime(Math.max(0.0001, gain), when + (opts.attack || 0.02));
             g.gain.exponentialRampToValueAtTime(0.0001, when + Math.max(0.06, dur));
@@ -821,34 +924,71 @@ function initTreatHunt(canvas) {
             songSources.push(src);
           };
 
-          const playLoop = (origin) => {
-            for (let i = 0; i < 8; i++) {
-              const t = origin + i * bar;
-              voice(BASS[i], bar * 0.92, "triangle", deep ? 0.2 : 0.15, t, {
-                cut: 240,
-                attack: 0.03,
-                slide: BASS[i] * 0.97,
-              });
-              for (const freq of CHAINS[i]) {
-                voice(freq, bar * 0.96, "sine", 0.035, t, { cut: deep ? 700 : 1400, attack: 0.18 });
-              }
-              if (level >= 1 && (i % 2 === 0 || !deep)) {
-                voice(148, 0.11, "sine", 0.2, t, { slide: 46, cut: 360, attack: 0.004 });
-                if (!deep) voice(148, 0.09, "sine", 0.12, t + eighth * 4, { slide: 50, cut: 320, attack: 0.004 });
-              }
-              if (level >= 2 && !deep) {
-                hat(t + eighth * 2);
-                hat(t + eighth * 6);
-              }
+          const clap = (when) => {
+            if (gen !== songGen || !songGain) return;
+            const dur = 0.08;
+            const len = Math.max(1, Math.floor(ac.sampleRate * dur));
+            const buffer = ac.createBuffer(1, len, ac.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < len; i++) {
+              data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 1.6);
             }
-            for (const [b, step, semi, steps] of MELODY) {
+            const src = ac.createBufferSource();
+            const filter = ac.createBiquadFilter();
+            const g = ac.createGain();
+            filter.type = "bandpass";
+            filter.frequency.value = 1700;
+            filter.Q.value = 0.6;
+            g.gain.setValueAtTime(0.14, when);
+            g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+            src.buffer = buffer;
+            src.connect(filter);
+            filter.connect(g);
+            g.connect(songGain);
+            src.start(when);
+            src.stop(when + dur + 0.02);
+            songSources.push(src);
+          };
+
+          const playLoop = (origin) => {
+            for (let i = 0; i < 4; i++) {
+              const t = origin + i * bar;
+              const bass = song.bass[i];
+              for (const freq of song.chords[i]) {
+                voice(freq, bar * 0.9, "triangle", 0.032, t, { cut: 1100, attack: 0.04 });
+              }
+              voice(bass, eighth * 1.5, "sawtooth", song.drive ? 0.1 : 0.08, t, {
+                cut: 320,
+                attack: 0.008,
+              });
+              voice(bass, eighth * 1.1, "sawtooth", 0.06, t + eighth * 3, {
+                cut: 260,
+                attack: 0.006,
+              });
+              if (song.drive) {
+                voice(bass * 2, eighth * 0.45, "square", 0.04, t + eighth * 2, { cut: 700, attack: 0.004 });
+                voice(bass * 2, eighth * 0.45, "square", 0.04, t + eighth * 6, { cut: 700, attack: 0.004 });
+              }
+              for (const step of song.kicks) {
+                voice(148, 0.12, "sine", song.drive ? 0.28 : 0.22, t + step * eighth, {
+                  slide: 46,
+                  cut: 380,
+                  attack: 0.004,
+                });
+              }
+              for (const step of song.claps) clap(t + step * eighth);
+              for (const step of song.hats) hat(t + step * eighth);
+            }
+            for (const [b, step, semi, steps] of song.melody) {
               const t = origin + b * bar + step * eighth;
-              const dur = steps * eighth * 0.9;
+              const dur = Math.max(0.07, steps * eighth * 0.86);
               const freq = note(semi);
-              voice(freq, dur, "sine", 0.1, t, { cut: deep ? 1100 : 2800, attack: 0.012 });
-              voice(freq * 2, dur * 0.55, "triangle", 0.028, t, { cut: 3200, attack: 0.008 });
-              if (level >= 3) {
-                voice(freq * 2, dur * 0.4, "sine", 0.02, t + 0.03, { cut: 2400, attack: 0.01 });
+              voice(freq, dur, song.lead, song.leadGain, t, { cut: song.cut, attack: 0.006 });
+              if (song.harmony) {
+                voice(freq * song.harmony, dur * 0.62, "triangle", song.leadGain * 0.35, t, {
+                  cut: song.cut + 400,
+                  attack: 0.008,
+                });
               }
             }
           };
@@ -1282,6 +1422,8 @@ function initTreatHunt(canvas) {
       canvas.height = bufH;
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = quality.tier === "low" ? "medium" : "high";
 
     state.player.y = viewH - 72;
     state.player.x = Math.min(
@@ -1948,6 +2090,7 @@ function initTreatHunt(canvas) {
     running = false;
     paused = false;
     cancelAnimationFrame(rafId);
+    startPreview();
     audio.stopMusic();
     finalScore.textContent = formatTideScore(state.score);
     const saved = setBest(state.score);
@@ -2061,6 +2204,7 @@ function initTreatHunt(canvas) {
       if (!audio.isMuted()) audio.start();
       if (audio.isMusicOn()) audio.startMusic(true);
     });
+    stopPreview();
     rafId = requestAnimationFrame(loop);
   }
 
@@ -2075,6 +2219,7 @@ function initTreatHunt(canvas) {
       audio.pause();
       setScreen("pause");
       cancelAnimationFrame(rafId);
+      startPreview();
     } else {
       lastTs = 0;
       aimX = null;
@@ -2085,6 +2230,7 @@ function initTreatHunt(canvas) {
         if (!running || paused || !audio.isMusicOn()) return;
         audio.startMusic(true);
       });
+      stopPreview();
       rafId = requestAnimationFrame(loop);
     }
   }
@@ -2100,7 +2246,7 @@ function initTreatHunt(canvas) {
     pointerActive = false;
     keys.clear();
     setScreen("start");
-    drawScene();
+    startPreview();
   }
 
   function update(dt) {
@@ -2807,98 +2953,154 @@ function initTreatHunt(canvas) {
     paintVignette(g, w, h);
   }
 
-  function buildLevelBackground(theme, w, h) {
-    const c = document.createElement("canvas");
-    c.width = w;
-    c.height = h;
-    const g = c.getContext("2d");
-    if (theme === "fleet") paintFleet(g, w, h);
-    else if (theme === "cloak") paintCloak(g, w, h);
-    else if (theme === "deep") paintDeep(g, w, h);
-    else paintHarbor(g, w, h, theme === "breach");
-    return c;
-  }
-
-  function paintWorldMotion(theme, w, h) {
-    const t = performance.now() * 0.001;
-    const groundY = h - 28;
-    if (theme === "fleet") {
-      ctx.globalAlpha = 0.12 + Math.sin(t * 1.6) * 0.05;
-      ctx.fillStyle = "#ffb06a";
+  function paintDriftClouds(w, h, t, tint) {
+    ctx.fillStyle = tint;
+    for (let i = 0; i < 4; i++) {
+      const speed = 18 + i * 7;
+      const x = ((t * speed + i * w * 0.28) % (w + 220)) - 110;
+      const y = h * (0.06 + i * 0.045);
       ctx.beginPath();
-      ctx.arc(w * 0.5, h * 0.2, 70, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-      ctx.strokeStyle = `rgba(210, 250, 246, ${0.18 + Math.sin(t * 2) * 0.08})`;
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      ctx.moveTo(0, h * 0.66);
-      for (let x = 0; x <= w; x += 18) {
-        ctx.lineTo(x, h * 0.66 + Math.sin(x * 0.04 + t * 1.4) * 3);
-      }
-      ctx.stroke();
-    } else if (theme === "cloak") {
-      ctx.fillStyle = "rgba(10, 14, 20, 0.72)";
-      for (let i = 0; i < 4; i++) {
-        const x = w * (0.2 + i * 0.12) + Math.sin(t * 1.5 + i) * 18;
-        const y = h * 0.16 + i * 10 + Math.cos(t * 2 + i) * 6;
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.quadraticCurveTo(x - 11, y - 7, x - 13, y);
-        ctx.quadraticCurveTo(x - 5, y - 2, x, y + 2);
-        ctx.quadraticCurveTo(x + 5, y - 2, x + 13, y);
-        ctx.quadraticCurveTo(x + 11, y - 7, x, y);
-        ctx.fill();
-      }
-      ctx.globalAlpha = 0.16 + Math.sin(t * 3) * 0.08;
-      ctx.fillStyle = "#ffd9a0";
-      ctx.beginPath();
-      ctx.arc(w * 0.7, groundY - 90, 18, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-    } else if (theme === "deep") {
-      ctx.fillStyle = "rgba(220, 255, 250, 0.45)";
-      for (let i = 0; i < 7; i++) {
-        const y = ((h * 0.85 - ((t * 28 + i * 70) % (h * 0.9))));
-        ctx.beginPath();
-        ctx.arc((i * 127) % w, y, 1.6 + (i % 3) * 0.6, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      const pulse = 0.18 + Math.sin(t * 3.2) * 0.1;
-      ctx.globalAlpha = pulse;
-      ctx.fillStyle = "#ffb04a";
-      ctx.beginPath();
-      ctx.arc(w * 0.1, groundY - 4, 16, 0, Math.PI * 2);
-      ctx.arc(w * 0.86, groundY - 2, 14, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-    } else {
-      ctx.globalAlpha = 0.1 + Math.sin(t * 1.3) * 0.04;
-      ctx.fillStyle = "#9fe8df";
-      ctx.beginPath();
-      ctx.arc(w * 0.58, h * 0.16, 40, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-      ctx.strokeStyle = `rgba(190, 245, 236, ${0.16 + Math.sin(t * 1.8) * 0.06})`;
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      ctx.moveTo(0, h * 0.66);
-      for (let x = 0; x <= w; x += 18) {
-        ctx.lineTo(x, h * 0.66 + Math.sin(x * 0.045 + t) * 3);
-      }
-      ctx.stroke();
-      ctx.fillStyle = `rgba(180, 230, 224, ${0.06 + Math.sin(t * 0.6) * 0.03})`;
-      ctx.beginPath();
-      ctx.ellipse(w * 0.4 + Math.sin(t * 0.35) * 16, h * 0.66 + 6, w * 0.22, 10, 0, 0, Math.PI * 2);
+      ctx.ellipse(x, y, 78 + i * 18, 14 + (i % 2) * 4, 0, 0, Math.PI * 2);
+      ctx.ellipse(x + 36, y + 4, 48, 12, 0, 0, Math.PI * 2);
       ctx.fill();
     }
   }
 
+  function paintTide(w, y, t, crest, deep, step) {
+    ctx.beginPath();
+    ctx.moveTo(0, y + 28);
+    for (let x = 0; x <= w; x += step) {
+      const wave =
+        Math.sin(x * 0.018 + t * 1.35) * 7 +
+        Math.sin(x * 0.045 - t * 2.1) * 3.5;
+      ctx.lineTo(x, y + wave);
+    }
+    ctx.lineTo(w, y + 36);
+    ctx.closePath();
+    ctx.fillStyle = crest;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(0, y + 46);
+    for (let x = 0; x <= w; x += step) {
+      const wave =
+        Math.sin(x * 0.012 - t * 0.85) * 5 +
+        Math.sin(x * 0.03 + t * 1.5) * 2.5;
+      ctx.lineTo(x, y + 10 + wave);
+    }
+    ctx.lineTo(w, y + 54);
+    ctx.closePath();
+    ctx.fillStyle = deep;
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(230, 255, 250, 0.28)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let x = 0; x <= w; x += step) {
+      const foam = y + Math.sin(x * 0.02 + t * 1.7) * 6 + Math.sin(t * 2.4 + x * 0.01) * 2;
+      if (x === 0) ctx.moveTo(x, foam);
+      else ctx.lineTo(x, foam);
+    }
+    ctx.stroke();
+  }
+
+  function paintWorldMotion(theme, w, h) {
+    const t = performance.now() * 0.001;
+    const step = quality.waveStep || 12;
+    const waterY = h * 0.66;
+    const groundY = h - 28;
+
+    if (theme === "fleet") {
+      paintDriftClouds(w, h, t, "rgba(255, 186, 120, 0.1)");
+      ctx.globalAlpha = 0.14 + Math.sin(t * 1.4) * 0.05;
+      ctx.fillStyle = "#ffb06a";
+      ctx.beginPath();
+      ctx.arc(w * 0.5 + Math.sin(t * 0.25) * 10, h * 0.2, 78, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      paintTide(w, waterY, t, "rgba(255, 176, 106, 0.16)", "rgba(120, 210, 220, 0.12)", step);
+    } else if (theme === "cloak") {
+      paintDriftClouds(w, h, t * 0.7, "rgba(20, 12, 10, 0.16)");
+      ctx.fillStyle = "rgba(10, 14, 20, 0.78)";
+      for (let i = 0; i < 5; i++) {
+        const travel = ((t * (36 + i * 8) + i * 140) % (w + 80)) - 40;
+        const y = h * (0.1 + (i % 3) * 0.05) + Math.sin(t * 2 + i) * 8;
+        ctx.beginPath();
+        ctx.moveTo(travel, y);
+        ctx.quadraticCurveTo(travel - 14, y - 9, travel - 16, y);
+        ctx.quadraticCurveTo(travel - 6, y - 2, travel, y + 3);
+        ctx.quadraticCurveTo(travel + 6, y - 2, travel + 16, y);
+        ctx.quadraticCurveTo(travel + 14, y - 9, travel, y);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 0.18 + Math.sin(t * 3) * 0.08;
+      ctx.fillStyle = "#ffd9a0";
+      ctx.beginPath();
+      ctx.arc(w * 0.7, groundY - 96 + Math.sin(t * 1.2) * 3, 20, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      paintTide(w, waterY, t, "rgba(255, 150, 60, 0.14)", "rgba(40, 90, 100, 0.12)", step);
+    } else if (theme === "deep") {
+      ctx.fillStyle = "rgba(220, 255, 250, 0.5)";
+      for (let i = 0; i < 10; i++) {
+        const y = (h * 0.92 - ((t * 36 + i * 64) % (h * 0.95)));
+        const x = (i * 137 + t * (8 + (i % 3) * 6)) % w;
+        ctx.beginPath();
+        ctx.arc(x, y, 1.5 + (i % 3) * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.strokeStyle = "rgba(190, 255, 246, 0.08)";
+      ctx.lineWidth = 28;
+      for (let i = 0; i < 4; i++) {
+        const x = ((t * 14 + i * w * 0.28) % (w + 80)) - 40;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x + 50, h);
+        ctx.stroke();
+      }
+      const pulse = 0.2 + Math.sin(t * 3.2) * 0.1;
+      ctx.globalAlpha = pulse;
+      ctx.fillStyle = "#ffb04a";
+      ctx.beginPath();
+      ctx.arc(w * 0.1, groundY - 4, 18, 0, Math.PI * 2);
+      ctx.arc(w * 0.86, groundY - 2, 16, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    } else {
+      paintDriftClouds(w, h, t * 0.85, "rgba(160, 230, 224, 0.08)");
+      ctx.globalAlpha = 0.12 + Math.sin(t * 1.2) * 0.04;
+      ctx.fillStyle = "#b8fff4";
+      ctx.beginPath();
+      ctx.arc(w * 0.58 + Math.sin(t * 0.2) * 8, h * 0.16, 52, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      for (let i = 0; i < 14; i++) {
+        const tw = 0.35 + Math.sin(t * 1.7 + i * 1.3) * 0.35;
+        ctx.globalAlpha = tw;
+        ctx.fillStyle = "#e8fffb";
+        ctx.fillRect((i * 83 + t * 4) % w, (i * 47) % (h * 0.42), 1.6, 1.6);
+      }
+      ctx.globalAlpha = 1;
+      paintTide(w, waterY, t, "rgba(170, 245, 236, 0.2)", "rgba(20, 90, 100, 0.14)", step);
+    }
+  }
 
   function getBackground(theme, w, h) {
-    const key = `${theme}:${w}x${h}`;
+    const scale = Math.max(1, Math.min(quality.dprCap, window.devicePixelRatio || 1));
+    const key = `${theme}:${w}x${h}@${scale}`;
     if (!bgCache.has(key)) {
-      bgCache.set(key, buildLevelBackground(theme, w, h));
+      const c = document.createElement("canvas");
+      c.width = Math.max(1, Math.round(w * scale));
+      c.height = Math.max(1, Math.round(h * scale));
+      const g = c.getContext("2d");
+      g.setTransform(scale, 0, 0, scale, 0, 0);
+      g.imageSmoothingEnabled = true;
+      g.imageSmoothingQuality = "high";
+      if (theme === "fleet") paintFleet(g, w, h);
+      else if (theme === "cloak") paintCloak(g, w, h);
+      else if (theme === "deep") paintDeep(g, w, h);
+      else paintHarbor(g, w, h, theme === "breach");
+      bgCache.set(key, c);
     }
     return bgCache.get(key);
   }
@@ -2906,10 +3108,18 @@ function initTreatHunt(canvas) {
   function drawBackground(w, h) {
     const lvl = currentLevel();
     const theme = lvl.theme || "harbor";
-    ctx.drawImage(getBackground(theme, w, h), 0, 0);
-
-    if (!quality.bgMotion) return;
-    paintWorldMotion(theme, w, h);
+    const bg = getBackground(theme, w, h);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = quality.tier === "low" ? "medium" : "high";
+    if (quality.bgMotion) {
+      const t = performance.now() * 0.001;
+      const drift = Math.sin(t * 0.28) * 10;
+      const tide = Math.sin(t * 0.72) * 6;
+      ctx.drawImage(bg, -16 + drift, -10 + tide, w + 32, h + 20);
+      paintWorldMotion(theme, w, h);
+    } else {
+      ctx.drawImage(bg, 0, 0, w, h);
+    }
   }
 
   function drawWhale(look) {
@@ -3316,8 +3526,8 @@ function initTreatHunt(canvas) {
         quality.tier === "low" ? 2.5 : isCoarse ? 4 : 12;
       const mag = state.shake * shakeScale;
       ctx.translate(
-        Math.round((Math.random() - 0.5) * mag),
-        Math.round((Math.random() - 0.5) * mag)
+        (Math.random() - 0.5) * mag,
+        (Math.random() - 0.5) * mag
       );
     }
 
@@ -3350,6 +3560,25 @@ function initTreatHunt(canvas) {
     }
 
     ctx.restore();
+  }
+
+  function stopPreview() {
+    if (!previewId) return;
+    cancelAnimationFrame(previewId);
+    previewId = 0;
+  }
+
+  function startPreview() {
+    if (previewId) return;
+    const tick = () => {
+      if (running && !paused) {
+        previewId = 0;
+        return;
+      }
+      drawScene();
+      previewId = requestAnimationFrame(tick);
+    };
+    previewId = requestAnimationFrame(tick);
   }
 
   function loop(ts) {
@@ -3577,6 +3806,6 @@ function initTreatHunt(canvas) {
   paintBest(getBest(), false);
   resizeCanvas(true);
   prewarmAssets();
-  drawScene();
+  startPreview();
   setScreen("start");
 }
