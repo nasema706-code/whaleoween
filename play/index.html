@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Keep the night — Whaleoween</title>
+  <meta name="description" content="Keep the night. A five-night treat hunt for Whaleoween.">
+  <meta name="theme-color" content="#0c0b0a">
+  <meta name="color-scheme" content="dark">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230c0b0a'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='16' fill='%23f6f1e8' font-family='Georgia'%3EW%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,460;9..144,560&family=Outfit:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="game.css">
+</head>
+<body>
+  <div class="page">
+    <header>
+      <a class="brand" href="../"><img src="../assets/mark.jpg" width="600" height="600" alt="">Whaleoween</a>
+      <nav class="nav" aria-label="Whaleoween">
+        <a class="btn" href="https://dexscreener.com/solana/9hv1i7xafDRDV6nEWtFZvqWYN19m6GThc2dSnZaEpump" target="_blank" rel="noopener noreferrer">Dexscreener<span class="sr"> (opens in a new tab)</span></a>
+        <a class="btn" href="https://x.com/i/communities/2011205966444847116" target="_blank" rel="noopener noreferrer">X<span class="sr"> (opens in a new tab)</span></a>
+        <a class="btn" href="https://t.me/getreadygo12" target="_blank" rel="noopener noreferrer">Telegram<span class="sr"> (opens in a new tab)</span></a>
+      </nav>
+    </header>
+    <main>
+      <section class="game-section" id="play">
+        <div class="section-head">
+          <p class="eyebrow">Play</p>
+          <h1>Keep the night.</h1>
+          <p>Five nights, from the lane to the hook. Catch the candy. Dodge the curses.</p>
+        </div>
+        <div class="game-shell">
+          <div class="game-stage" aria-label="Whaleoween treat hunt">
+            <canvas id="game" width="900" height="560" tabindex="0" aria-label="Game canvas. Arrow keys or A and D move. Space pauses."></canvas>
+            <div class="game-overlay" id="overlay" data-screen="start">
+              <div class="game-panel game-panel-start" id="panel-start">
+                <p class="game-brand">$WHALEOWEEN</p>
+                <h2>Keep the night</h2>
+                <p class="game-lede">Choose a whale. Catch candy, pumpkins, and stars. Dodge the curses.</p>
+                <div class="char-pick" id="char-pick">
+                  <p class="char-pick-label">Choose your whale</p>
+                  <div class="char-pick-grid" id="char-pick-grid" role="listbox" aria-label="Playable whales"></div>
+                  <p class="char-pick-name" id="char-pick-name">The Lane</p>
+                </div>
+                <button class="btn" type="button" id="btn-start">Begin</button>
+                <p class="game-hint">Arrow keys or A D to move. Space to pause.</p>
+              </div>
+              <div class="game-panel" id="panel-pause" hidden>
+                <h2>The night waits</h2>
+                <p class="game-lede">Resume when you are ready.</p>
+                <div class="game-pause-actions">
+                  <button class="btn" type="button" id="btn-resume">Resume</button>
+                  <button class="btn btn-ghost" type="button" id="btn-pause-quit">Leave the lane</button>
+                </div>
+              </div>
+              <div class="game-panel" id="panel-over" hidden>
+                <p class="game-brand">$WHALEOWEEN</p>
+                <h2 id="over-title">Dawn almost</h2>
+                <p class="game-scoreline">Score <span id="final-score">0</span></p>
+                <p class="game-best">Best <span id="best-score">0</span></p>
+                <p class="game-lede" id="over-blurb">The lane will remember.</p>
+                <button class="btn" type="button" id="btn-again">Play again</button>
+              </div>
+            </div>
+            <div class="game-hud" id="hud" hidden>
+              <div class="game-hud-item">
+                <span class="game-hud-label">Night</span>
+                <span class="game-hud-value" id="hud-level">1/5</span>
+              </div>
+              <div class="game-hud-item">
+                <span class="game-hud-label">Score</span>
+                <span class="game-hud-value" id="hud-score">0</span>
+              </div>
+              <div class="game-hud-item">
+                <span class="game-hud-label">Lives</span>
+                <span class="game-hud-value game-hud-lives" id="hud-lives">♥♥♥</span>
+              </div>
+              <div class="game-hud-item">
+                <span class="game-hud-label">Time</span>
+                <span class="game-hud-value" id="hud-time">40</span>
+              </div>
+              <div class="game-hud-item game-hud-combo">
+                <span class="game-hud-label">Combo</span>
+                <span class="game-hud-value" id="hud-combo">—</span>
+              </div>
+              <div class="game-hud-item game-hud-power">
+                <span class="game-hud-label">Power</span>
+                <span class="game-hud-value game-hud-power-val" id="hud-power">—</span>
+              </div>
+            </div>
+            <button class="game-pause-btn" type="button" id="btn-pause" hidden>Pause</button>
+            <button class="game-music" type="button" id="btn-music" aria-pressed="false">Music Off</button>
+            <button class="game-mute" type="button" id="btn-mute" aria-pressed="false">Sound On</button>
+            <button class="game-quality" type="button" id="btn-quality" aria-label="Graphics quality">Auto</button>
+          </div>
+          <p class="game-touch-hint" id="touch-hint" hidden>Slide to steer. The whale follows your finger.</p>
+        </div>
+      </section>
+    </main>
+    <footer>
+      <p>Whaleoween ($WHALEOWEEN) is a memecoin on Solana. It confers no ownership, claim on assets, or right to any revenue. The token is speculative: its price can fall to zero, and a market for it may not exist. Nothing on this site is an offer to sell, a solicitation to buy, or financial, investment, legal, or tax advice. Confirm the contract before you transact: 9hv1i7xafDRDV6nEWtFZvqWYN19m6GThc2dSnZaEpump. Your best score stays on this device.</p>
+    </footer>
+  </div>
+  <script src="../fall.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
