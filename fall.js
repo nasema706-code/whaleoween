@@ -1,23 +1,21 @@
 (function () {
-  var canvas = document.createElement("canvas");
-  canvas.className = "fall";
-  canvas.setAttribute("aria-hidden", "true");
-  document.body.prepend(canvas);
+  var layer = document.createElement("div");
+  layer.className = "fall";
+  layer.setAttribute("aria-hidden", "true");
+  document.body.prepend(layer);
 
-  var ctx = canvas.getContext("2d", { alpha: false });
+  var style = document.createElement("style");
+  style.textContent =
+    ".fall{overflow:hidden}" +
+    ".fall-piece{position:absolute;top:-18vh;height:auto;max-width:none;object-fit:contain;background:transparent;animation-name:fall-drop;animation-timing-function:linear;animation-iteration-count:infinite;pointer-events:none}" +
+    "@keyframes fall-drop{from{transform:translate3d(0,-10vh,0) rotate(0deg)}to{transform:translate3d(var(--drift),120vh,0) rotate(var(--spin))}}" +
+    "@media (prefers-reduced-motion:reduce){.fall-piece{animation:none}}";
+  document.head.appendChild(style);
+
   var kinds = ["candy", "pumpkin", "skull"];
-  var sprites = {};
-  var pieces = [];
-  var width = 0;
-  var height = 0;
-  var dpr = 1;
-  var lite = false;
-  var sky = null;
-  var sizedW = 0;
-  var sizedH = 0;
-  var raf = 0;
-  var last = 0;
+  var urls = {};
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var mode = "";
 
   function roundRect(g, x, y, w, h, r) {
     var rr = Math.min(r, w / 2, h / 2);
@@ -110,104 +108,45 @@
       var g = c.getContext("2d");
       g.translate(64, 64);
       paint(g, kind);
-      sprites[kind] = c;
+      urls[kind] = c.toDataURL("image/png");
     });
   }
 
-  function makePiece(scatter) {
-    return {
-      kind: kinds[(Math.random() * kinds.length) | 0],
-      x: Math.random() * width,
-      y: scatter ? Math.random() * height : -40 - Math.random() * height * 0.45,
-      speed: 28 + Math.random() * 46,
-      spin: (Math.random() - 0.5) * 0.8,
-      rot: Math.random() * Math.PI * 2,
-      scale: (0.72 + Math.random() * 0.5) * 0.7,
-      phase: Math.random() * Math.PI * 2,
-      sway: 0.6 + Math.random() * 0.8
-    };
+  function countFor(w) {
+    return w <= 800 ? 5 : 10;
   }
 
-  function fill() {
-    var next = lite
-      ? Math.round(Math.min(7, Math.max(4, width / 140)))
-      : Math.round(Math.min(26, Math.max(9, width / 72)));
-    while (pieces.length < next) pieces.push(makePiece(true));
-    if (pieces.length > next) pieces.length = next;
-  }
-
-  function resize() {
-    var nextW = window.innerWidth;
-    var nextH = window.innerHeight;
-    if (canvas.width && nextW === sizedW && Math.abs(nextH - sizedH) < 80) return;
-    sizedW = nextW;
-    sizedH = nextH;
-    lite = nextW <= 800;
-    dpr = lite ? 1 : Math.min(window.devicePixelRatio || 1, 2);
-    width = nextW;
-    height = nextH;
-    canvas.width = Math.max(1, Math.round(width * dpr));
-    canvas.height = Math.max(1, Math.round(height * dpr));
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    sky = ctx.createRadialGradient(width * 0.8, 0, 0, width * 0.8, 0, Math.min(width, 900));
-    sky.addColorStop(0, "rgba(196, 165, 116, 0.09)");
-    sky.addColorStop(0.55, "rgba(196, 165, 116, 0)");
-    fill();
-    draw(0);
-  }
-
-  function draw() {
-    ctx.fillStyle = "#0c0b0a";
-    ctx.fillRect(0, 0, width, height);
-    if (sky && !lite) {
-      ctx.fillStyle = sky;
-      ctx.fillRect(0, 0, width, height);
-    }
-    var base = dpr;
-    for (var i = 0; i < pieces.length; i++) {
-      var p = pieces[i];
-      var sc = p.scale * base;
-      var cos = Math.cos(p.rot);
-      var sin = Math.sin(p.rot);
-      ctx.setTransform(sc * cos, sc * sin, -sc * sin, sc * cos, p.x * base, p.y * base);
-      ctx.drawImage(sprites[p.kind], -64, -64);
-    }
-    ctx.setTransform(base, 0, 0, base, 0, 0);
-  }
-
-  function frame(now) {
-    var dt = Math.min(0.05, (now - last) / 1000 || 0.016);
-    last = now;
-    for (var i = 0; i < pieces.length; i++) {
-      var p = pieces[i];
-      p.y += p.speed * dt;
-      p.x += Math.sin(now * 0.001 * p.sway + p.phase) * 18 * dt;
-      p.rot += p.spin * dt;
-      if (p.y > height + 70) {
-        p.y = -50 - Math.random() * 80;
-        p.x = Math.random() * width;
+  function build() {
+    var w = window.innerWidth;
+    var n = countFor(w);
+    var frag = document.createDocumentFragment();
+    for (var i = 0; i < n; i++) {
+      var img = document.createElement("img");
+      img.className = "fall-piece";
+      img.alt = "";
+      img.decoding = "async";
+      img.src = urls[kinds[i % kinds.length]];
+      var size = Math.round(128 * (0.72 + Math.random() * 0.5) * 0.7);
+      img.style.width = size + "px";
+      img.style.left = Math.random() * 92 + "%";
+      img.style.setProperty("--drift", Math.round((Math.random() - 0.5) * 36) + "px");
+      img.style.setProperty("--spin", Math.round((Math.random() - 0.5) * 70) + "deg");
+      if (reduced) {
+        img.style.top = Math.random() * 80 + "vh";
+      } else {
+        img.style.animationDuration = 16 + Math.random() * 10 + "s";
+        img.style.animationDelay = -Math.random() * 26 + "s";
       }
-      if (p.x < -60) p.x = width + 40;
-      if (p.x > width + 60) p.x = -40;
+      frag.appendChild(img);
     }
-    draw();
-    raf = requestAnimationFrame(frame);
+    layer.replaceChildren(frag);
+    mode = w <= 800 ? "m" : "d";
   }
 
   bake();
-  resize();
-  window.addEventListener("resize", resize);
-  if (!reduced) {
-    last = performance.now();
-    raf = requestAnimationFrame(frame);
-    document.addEventListener("visibilitychange", function () {
-      if (document.hidden) {
-        cancelAnimationFrame(raf);
-        raf = 0;
-      } else if (!raf) {
-        last = performance.now();
-        raf = requestAnimationFrame(frame);
-      }
-    });
-  }
+  build();
+  window.addEventListener("resize", function () {
+    var next = window.innerWidth <= 800 ? "m" : "d";
+    if (next !== mode) build();
+  });
 })();
