@@ -11,7 +11,10 @@
   var width = 0;
   var height = 0;
   var dpr = 1;
+  var lite = false;
   var sky = null;
+  var sizedW = 0;
+  var sizedH = 0;
   var raf = 0;
   var last = 0;
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -119,22 +122,30 @@
       speed: 28 + Math.random() * 46,
       spin: (Math.random() - 0.5) * 0.8,
       rot: Math.random() * Math.PI * 2,
-      scale: 0.72 + Math.random() * 0.5,
+      scale: (0.72 + Math.random() * 0.5) * 0.7,
       phase: Math.random() * Math.PI * 2,
       sway: 0.6 + Math.random() * 0.8
     };
   }
 
   function fill() {
-    var next = Math.round(Math.min(26, Math.max(9, width / 72)));
+    var next = lite
+      ? Math.round(Math.min(7, Math.max(4, width / 140)))
+      : Math.round(Math.min(26, Math.max(9, width / 72)));
     while (pieces.length < next) pieces.push(makePiece(true));
     if (pieces.length > next) pieces.length = next;
   }
 
   function resize() {
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
-    width = window.innerWidth;
-    height = window.innerHeight;
+    var nextW = window.innerWidth;
+    var nextH = window.innerHeight;
+    if (canvas.width && nextW === sizedW && Math.abs(nextH - sizedH) < 80) return;
+    sizedW = nextW;
+    sizedH = nextH;
+    lite = nextW <= 800;
+    dpr = lite ? 1 : Math.min(window.devicePixelRatio || 1, 2);
+    width = nextW;
+    height = nextH;
     canvas.width = Math.max(1, Math.round(width * dpr));
     canvas.height = Math.max(1, Math.round(height * dpr));
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -148,20 +159,20 @@
   function draw() {
     ctx.fillStyle = "#0c0b0a";
     ctx.fillRect(0, 0, width, height);
-    if (sky) {
+    if (sky && !lite) {
       ctx.fillStyle = sky;
       ctx.fillRect(0, 0, width, height);
     }
+    var base = dpr;
     for (var i = 0; i < pieces.length; i++) {
       var p = pieces[i];
-      var sprite = sprites[p.kind];
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.rotate(p.rot);
-      ctx.scale(p.scale, p.scale);
-      ctx.drawImage(sprite, -64, -64);
-      ctx.restore();
+      var sc = p.scale * base;
+      var cos = Math.cos(p.rot);
+      var sin = Math.sin(p.rot);
+      ctx.setTransform(sc * cos, sc * sin, -sc * sin, sc * cos, p.x * base, p.y * base);
+      ctx.drawImage(sprites[p.kind], -64, -64);
     }
+    ctx.setTransform(base, 0, 0, base, 0, 0);
   }
 
   function frame(now) {
