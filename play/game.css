@@ -641,10 +641,11 @@ footer p { margin: 0; max-width: 46rem; overflow-wrap: anywhere; }
     padding-top: max(8px, env(safe-area-inset-top));
     padding-bottom: 8px;
   }
-  .brand { font-size: 12px; letter-spacing: 0.08em; }
+  .brand { font-size: 12px; letter-spacing: 0.08em; min-width: 0; }
   .brand img.brand-mark { width: 32px; height: 32px; max-width: 32px; }
-  .brand-word { height: 30px; }
-  .nav { flex-wrap: nowrap; gap: 4px; }
+  .brand-word { height: 28px; max-width: min(140px, 34vw); }
+  .nav { flex: 1 1 auto; flex-wrap: nowrap; justify-content: flex-end; gap: 4px; min-width: 0; }
+  .nav .btn { min-height: 40px; padding: 0 8px; font-size: 12px; white-space: nowrap; }
   main {
     display: flex;
     flex-direction: column;
@@ -697,7 +698,11 @@ footer p { margin: 0; max-width: 46rem; overflow-wrap: anywhere; }
     top: 0.55rem;
     width: min(calc(100% - 1rem), 520px);
   }
-  .nav .btn { min-height: 40px; padding: 0 8px; font-size: 12px; }
+}
+
+@media (max-width: 380px) {
+  .nav .btn { padding: 0 6px; font-size: 11px; }
+  .brand-word { max-width: 28vw; }
 }
 
 @media (prefers-reduced-motion: reduce) {

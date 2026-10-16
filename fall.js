@@ -7,9 +7,8 @@
   var style = document.createElement("style");
   style.textContent =
     ".fall{overflow:hidden}" +
-    ".fall-piece{position:absolute;top:-18vh;height:auto;max-width:none;object-fit:contain;background:transparent;animation-name:fall-drop;animation-timing-function:linear;animation-iteration-count:infinite;pointer-events:none}" +
-    "@keyframes fall-drop{from{transform:translate3d(0,-10vh,0) rotate(0deg)}to{transform:translate3d(var(--drift),120vh,0) rotate(var(--spin))}}" +
-    "@media (prefers-reduced-motion:reduce){.fall-piece{animation:none}}";
+    ".fall-piece{position:absolute;top:0;display:block;pointer-events:none;will-change:transform}" +
+    ".fall-piece img{width:100%;max-width:none;height:auto;display:block;background:transparent}";
   document.head.appendChild(style);
 
   var kinds = ["lantern", "jelly", "eel"];
@@ -151,26 +150,45 @@
     var w = window.innerWidth;
     var n = countFor(w);
     var frag = document.createDocumentFragment();
+    var motions = [];
     for (var i = 0; i < n; i++) {
+      var piece = document.createElement("span");
+      piece.className = "fall-piece";
       var img = document.createElement("img");
-      img.className = "fall-piece";
       img.alt = "";
       img.decoding = "async";
       img.src = urls[kinds[i % kinds.length]];
+      piece.appendChild(img);
       var size = Math.round(128 * (0.72 + Math.random() * 0.5) * 0.7);
-      img.style.width = size + "px";
-      img.style.left = Math.random() * 92 + "%";
-      img.style.setProperty("--drift", Math.round((Math.random() - 0.5) * 36) + "px");
-      img.style.setProperty("--spin", Math.round((Math.random() - 0.5) * 70) + "deg");
+      var drift = Math.round((Math.random() - 0.5) * 36);
+      var spin = Math.round((Math.random() - 0.5) * 70);
+      piece.style.width = size + "px";
+      piece.style.left = Math.random() * 92 + "%";
       if (reduced) {
-        img.style.top = Math.random() * 80 + "vh";
+        piece.style.top = Math.random() * 80 + "vh";
+        piece.style.transform = "translate3d(" + drift + "px,0,0) rotate(" + spin + "deg)";
       } else {
-        img.style.animationDuration = 16 + Math.random() * 10 + "s";
-        img.style.animationDelay = -Math.random() * 26 + "s";
+        motions.push({ piece: piece, size: size, drift: drift, spin: spin });
       }
-      frag.appendChild(img);
+      frag.appendChild(piece);
     }
     layer.replaceChildren(frag);
+    var travel = Math.round(window.innerHeight * 1.25);
+    motions.forEach(function (m) {
+      var duration = (16 + Math.random() * 10) * 1000;
+      m.piece.animate(
+        [
+          { transform: "translate3d(0,-" + m.size + "px,0) rotate(0deg)" },
+          { transform: "translate3d(" + m.drift + "px," + travel + "px,0) rotate(" + m.spin + "deg)" }
+        ],
+        {
+          duration: duration,
+          delay: -Math.random() * duration,
+          iterations: Infinity,
+          easing: "linear"
+        }
+      );
+    });
     mode = w <= 800 ? "m" : "d";
   }
 

@@ -63,7 +63,6 @@
       height: 100%;
       pointer-events: none;
       overflow: hidden;
-      contain: paint;
     }
     .page {
       position: relative;
@@ -75,11 +74,16 @@
       position: sticky;
       top: 0;
       z-index: 5;
-      display: flex;
+      box-sizing: border-box;
+      width: calc(100% + var(--pad) + var(--pad-r));
+      margin-left: calc(var(--pad) * -1);
+      margin-right: calc(var(--pad-r) * -1);
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-areas: "brand nav cta";
       align-items: center;
-      justify-content: space-between;
-      gap: 16px 24px;
-      padding: max(14px, env(safe-area-inset-top)) 0 14px;
+      column-gap: clamp(8px, 1.2vw, 16px);
+      padding: max(10px, env(safe-area-inset-top)) var(--pad-r) 10px var(--pad);
       background: rgba(7, 11, 22, 0.62);
       border-bottom: 1px solid var(--line);
       box-shadow: 0 8px 28px rgba(255, 122, 26, 0.08);
@@ -87,6 +91,7 @@
       -webkit-backdrop-filter: blur(16px);
     }
     .brand {
+      grid-area: brand;
       display: inline-flex;
       align-items: center;
       gap: 10px;
@@ -125,16 +130,34 @@
       background: transparent;
     }
     .nav, .hero-actions, .dock { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+    .nav {
+      grid-area: nav;
+      width: 100%;
+      flex-wrap: nowrap;
+      justify-content: space-between;
+      min-width: 0;
+      gap: 0;
+    }
     .nav-link {
       color: var(--muted);
-      font-size: 13px;
+      flex: 1 1 auto;
+      justify-content: center;
+      font-size: clamp(12px, 1.15vw, 14px);
       font-weight: 500;
-      letter-spacing: 0.14em;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
       text-decoration: none;
-      min-height: 48px;
+      min-height: 44px;
+      padding: 0 2px;
+      white-space: nowrap;
       display: inline-flex;
       align-items: center;
+    }
+    .header-cta {
+      grid-area: cta;
+      flex: 0 0 auto;
+      white-space: nowrap;
+      padding-inline: clamp(12px, 1.4vw, 16px);
     }
     .nav-link:hover { color: var(--cream); }
     .btn {
@@ -502,12 +525,45 @@
     footer p { margin: 0; max-width: 46rem; overflow-wrap: anywhere; }
     .dock { display: none; }
     @media (max-width: 1040px) {
-      .nav { gap: 4px 12px; }
-      .nav-link { letter-spacing: 0.08em; font-size: 12px; }
-      .brand { letter-spacing: 0.1em; font-size: 13px; }
+      .nav-link { letter-spacing: 0.02em; font-size: 12px; }
+      .brand-word { max-width: min(180px, 24vw); }
     }
     @media (max-width: 800px) {
-      .nav, .header-cta { display: none; }
+      header {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas: "brand cta" "nav nav";
+        column-gap: 8px;
+        row-gap: 0;
+        padding-top: max(8px, env(safe-area-inset-top));
+        padding-bottom: 4px;
+      }
+      .brand { min-width: 0; gap: 8px; }
+      .brand img.brand-mark { width: 32px; height: 32px; max-width: 32px; }
+      .brand-word { height: 28px; max-width: 100%; }
+      .header-cta {
+        display: inline-flex;
+        min-height: 40px;
+        padding-inline: 12px;
+        font-size: 12px;
+        letter-spacing: 0.04em;
+      }
+      .nav {
+        display: flex;
+        justify-content: space-between;
+        gap: 0;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .nav::-webkit-scrollbar { display: none; }
+      .nav-link {
+        flex: 1 0 auto;
+        justify-content: center;
+        min-width: 44px;
+        min-height: 40px;
+        font-size: 12px;
+        letter-spacing: 0.02em;
+        padding: 0 4px;
+      }
       .hero { padding: 28px 0 12px; }
       .swipe {
         display: block;
@@ -536,27 +592,6 @@
         flex: 0 0 min(82vw, 420px);
         scroll-snap-align: start;
       }
-      .dock {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 8px;
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 6;
-        padding: 10px var(--pad-r) calc(10px + env(safe-area-inset-bottom)) var(--pad);
-        background: rgba(7, 11, 22, 0.82);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border-top: 1px solid var(--line);
-      }
-      .dock .btn {
-        min-height: 48px;
-        padding: 0 8px;
-        font-size: 13px;
-        white-space: nowrap;
-      }
       .chart-frame { height: 360px; min-height: 320px; }
       .album {
         grid-template-columns: 1fr;
@@ -565,10 +600,11 @@
       }
       .sleeve { width: min(100%, 420px); margin: 0 auto; }
       .album-title { font-size: 40px; }
-      footer { padding-bottom: calc(88px + env(safe-area-inset-bottom)); }
     }
-    @media (max-width: 360px) {
-      .dock .btn { font-size: 12px; letter-spacing: 0; }
+    @media (max-width: 380px) {
+      .nav-link { font-size: 11px; letter-spacing: 0.01em; padding: 0 4px; }
+      .header-cta { font-size: 11px; padding-inline: 10px; }
+      .brand-word { max-width: 42vw; }
     }
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
@@ -586,7 +622,7 @@
         <a class="nav-link" href="#listen">Listen</a>
         <a class="nav-link" href="#chart">Chart</a>
         <a class="nav-link" href="https://x.com/i/communities/2011205966444847116" target="_blank" rel="noopener noreferrer">X<span class="sr"> (opens in a new tab)</span></a>
-        <a class="nav-link" href="https://t.me/getreadygo12" target="_blank" rel="noopener noreferrer">Telegram<span class="sr"> (opens in a new tab)</span></a>
+        <a class="nav-link" href="https://t.me/WHALEOWEEN" target="_blank" rel="noopener noreferrer">Telegram<span class="sr"> (opens in a new tab)</span></a>
       </nav>
       <a class="btn btn-solid header-cta" href="https://dexscreener.com/solana/9hv1i7xafDRDV6nEWtFZvqWYN19m6GThc2dSnZaEpump" target="_blank" rel="noopener noreferrer">Find $WHALEOWEEN<span class="sr"> (opens in a new tab)</span></a>
     </header>
@@ -932,7 +968,7 @@
   <nav class="dock" aria-label="Whaleoween links">
     <a class="btn" href="https://dexscreener.com/solana/9hv1i7xafDRDV6nEWtFZvqWYN19m6GThc2dSnZaEpump" target="_blank" rel="noopener noreferrer">Dexscreener<span class="sr"> (opens in a new tab)</span></a>
     <a class="btn" href="https://x.com/i/communities/2011205966444847116" target="_blank" rel="noopener noreferrer">X<span class="sr"> (opens in a new tab)</span></a>
-    <a class="btn" href="https://t.me/getreadygo12" target="_blank" rel="noopener noreferrer">Telegram<span class="sr"> (opens in a new tab)</span></a>
+    <a class="btn" href="https://t.me/WHALEOWEEN" target="_blank" rel="noopener noreferrer">Telegram<span class="sr"> (opens in a new tab)</span></a>
   </nav>
 </body>
 </html>
