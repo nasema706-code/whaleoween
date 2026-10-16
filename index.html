@@ -257,6 +257,36 @@
     }
     .chart-note a { color: var(--gold); text-decoration: none; }
     .chart-note a:hover { color: var(--cream); }
+    .chart-fast {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: 14px 12px 10px;
+      background:
+        radial-gradient(ellipse 55% 45% at 80% 0%, rgba(127, 212, 203, 0.14), transparent 58%),
+        #0c2430;
+    }
+    .chart-fast[hidden] { display: none; }
+    .chart-meta {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .chart-price,
+    .chart-change { margin: 0; }
+    .chart-price {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+    .chart-change { font-size: 14px; font-weight: 700; }
+    .chart-change.is-up { color: var(--gold); }
+    .chart-change.is-down { color: #d45b6a; }
+    .chart-fast svg { flex: 1; width: 100%; min-height: 0; display: block; }
     .listen { padding: 8px 0 64px; }
     .album {
       display: grid;
@@ -500,6 +530,7 @@
         font-size: 13px;
         white-space: nowrap;
       }
+      .chart-frame { height: 360px; min-height: 320px; }
       .album {
         grid-template-columns: 1fr;
         gap: 18px;
@@ -549,18 +580,6 @@
         <figure class="portrait">
           <img src="assets/street.jpg" width="1168" height="784" alt="A small grey whale in a brown fedora and a torn red-and-green striped sweater walks a wet Halloween street, holding a pumpkin bucket of candy, with a metal claw on the other hand.">
         </figure>
-      </section>
-      <section class="chart" id="chart" aria-label="Live price chart">
-        <h2>The chart</h2>
-        <div class="chart-frame">
-          <iframe
-            title="Live Whaleoween chart on Dexscreener"
-            src="https://dexscreener.com/solana/FAEM12aTLb3YXH946FTX63atDGiKEtoSWKXRZYHbB3fn?embed=1&amp;loadChartSettings=0&amp;trades=0&amp;tabs=0&amp;info=0&amp;chartLeftToolbar=0&amp;chartDefaultOnMobile=1&amp;chartTheme=dark&amp;theme=dark&amp;chartStyle=0&amp;chartType=usd&amp;interval=15"
-            loading="lazy"
-            allow="clipboard-write"
-          ></iframe>
-        </div>
-        <p class="chart-note"><a href="https://dexscreener.com/solana/FAEM12aTLb3YXH946FTX63atDGiKEtoSWKXRZYHbB3fn" target="_blank" rel="noopener noreferrer">Open on Dexscreener<span class="sr"> (opens in a new tab)</span></a></p>
       </section>
       <section class="gallery" id="night" aria-label="Selected frames">
         <h2>The night</h2>
@@ -630,11 +649,142 @@
         </div>
         <audio id="player" preload="metadata" src="assets/halloween-whale.mp3"></audio>
       </section>
+      <section class="chart" id="chart" aria-label="Live price chart">
+        <h2>The chart</h2>
+        <div class="chart-frame">
+          <div class="chart-fast" id="chart-fast" hidden>
+            <div class="chart-meta">
+              <p class="chart-price" id="chart-price">Loading the chart</p>
+              <p class="chart-change" id="chart-change"></p>
+            </div>
+            <svg id="chart-svg" role="img" aria-label="Whaleoween price chart" viewBox="0 0 320 180" preserveAspectRatio="none"></svg>
+          </div>
+          <iframe
+            id="chart-embed"
+            title="Live Whaleoween chart on Dexscreener"
+            data-src="https://dexscreener.com/solana/FAEM12aTLb3YXH946FTX63atDGiKEtoSWKXRZYHbB3fn?embed=1&amp;loadChartSettings=0&amp;trades=0&amp;tabs=0&amp;info=0&amp;chartLeftToolbar=0&amp;chartDefaultOnMobile=1&amp;chartTheme=dark&amp;theme=dark&amp;chartStyle=0&amp;chartType=usd&amp;interval=15"
+            loading="lazy"
+            allow="clipboard-write"
+          ></iframe>
+        </div>
+        <p class="chart-note"><a href="https://dexscreener.com/solana/FAEM12aTLb3YXH946FTX63atDGiKEtoSWKXRZYHbB3fn" target="_blank" rel="noopener noreferrer">Open on Dexscreener<span class="sr"> (opens in a new tab)</span></a></p>
+      </section>
     </main>
     <footer>
       <p>Whaleoween ($WHALEOWEEN) is a memecoin on Solana. It confers no ownership, claim on assets, or right to any revenue. The token is speculative: its price can fall to zero, and a market for it may not exist. Nothing on this site is an offer to sell, a solicitation to buy, or financial, investment, legal, or tax advice. Confirm the contract before you transact: 9hv1i7xafDRDV6nEWtFZvqWYN19m6GThc2dSnZaEpump.</p>
     </footer>
   </div>
+  <script>
+    (function () {
+      var embed = document.getElementById("chart-embed");
+      var fast = document.getElementById("chart-fast");
+      var priceEl = document.getElementById("chart-price");
+      var changeEl = document.getElementById("chart-change");
+      var svg = document.getElementById("chart-svg");
+      if (!embed) return;
+      var src = embed.getAttribute("data-src");
+      var mobile = window.matchMedia("(max-width: 800px)").matches;
+
+      function showEmbed() {
+        if (fast) fast.hidden = true;
+        embed.hidden = false;
+        if (src && !embed.getAttribute("src")) embed.src = src;
+      }
+
+      function money(value) {
+        var n = Number(value);
+        if (!isFinite(n)) return "";
+        if (n >= 1) return "$" + n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+        if (n >= 0.01) return "$" + n.toFixed(4);
+        return "$" + n.toFixed(8).replace(/0+$/, "").replace(/\.$/, "");
+      }
+
+      function draw(list) {
+        var ns = "http://www.w3.org/2000/svg";
+        var w = 320;
+        var h = 180;
+        var highs = list.map(function (c) { return c[2]; });
+        var lows = list.map(function (c) { return c[3]; });
+        var max = Math.max.apply(null, highs);
+        var min = Math.min.apply(null, lows);
+        var pad = (max - min) * 0.08 || Math.abs(max) * 0.02 || 1;
+        max += pad;
+        min -= pad;
+        var slot = w / list.length;
+        function y(v) { return ((max - v) / (max - min)) * h; }
+        while (svg.firstChild) svg.removeChild(svg.firstChild);
+        for (var g = 1; g <= 3; g++) {
+          var line = document.createElementNS(ns, "line");
+          var gy = (h / 4) * g;
+          line.setAttribute("x1", "0");
+          line.setAttribute("x2", String(w));
+          line.setAttribute("y1", String(gy));
+          line.setAttribute("y2", String(gy));
+          line.setAttribute("stroke", "rgba(127, 212, 203, 0.18)");
+          line.setAttribute("stroke-width", "1");
+          svg.appendChild(line);
+        }
+        list.forEach(function (c, i) {
+          var open = c[1];
+          var high = c[2];
+          var low = c[3];
+          var close = c[4];
+          var up = close >= open;
+          var color = up ? "#7fd4cb" : "#e8843a";
+          var x = i * slot + slot / 2;
+          var wick = document.createElementNS(ns, "line");
+          wick.setAttribute("x1", String(x));
+          wick.setAttribute("x2", String(x));
+          wick.setAttribute("y1", String(y(high)));
+          wick.setAttribute("y2", String(y(low)));
+          wick.setAttribute("stroke", color);
+          wick.setAttribute("stroke-width", "1.5");
+          svg.appendChild(wick);
+          var body = document.createElementNS(ns, "rect");
+          var top = y(Math.max(open, close));
+          var bottom = y(Math.min(open, close));
+          var bh = Math.max(1.5, bottom - top);
+          body.setAttribute("x", String(x - slot * 0.28));
+          body.setAttribute("y", String(top));
+          body.setAttribute("width", String(Math.max(2, slot * 0.56)));
+          body.setAttribute("height", String(bh));
+          body.setAttribute("fill", color);
+          svg.appendChild(body);
+        });
+      }
+
+      if (!mobile) {
+        showEmbed();
+        return;
+      }
+
+      embed.hidden = true;
+      if (fast) fast.hidden = false;
+      var pairUrl = "https://api.dexscreener.com/latest/dex/pairs/solana/FAEM12aTLb3YXH946FTX63atDGiKEtoSWKXRZYHbB3fn";
+      var candleUrl = "https://api.geckoterminal.com/api/v2/networks/solana/pools/FAEM12aTLb3YXH946FTX63atDGiKEtoSWKXRZYHbB3fn/ohlcv/minute?aggregate=15&limit=48&currency=usd";
+
+      Promise.allSettled([
+        fetch(pairUrl).then(function (r) { return r.json(); }),
+        fetch(candleUrl).then(function (r) { return r.json(); })
+      ]).then(function (results) {
+        var pair = results[0].status === "fulfilled" && results[0].value.pairs && results[0].value.pairs[0];
+        var candles = results[1].status === "fulfilled" && results[1].value.data && results[1].value.data.attributes && results[1].value.data.attributes.ohlcv_list;
+        if (!candles || !candles.length) throw new Error("chart");
+        if (pair && priceEl) {
+          priceEl.textContent = money(pair.priceUsd);
+          var h24 = pair.priceChange && Number(pair.priceChange.h24);
+          if (changeEl && isFinite(h24)) {
+            changeEl.textContent = (h24 > 0 ? "+" : "") + h24.toFixed(1) + "% 24h";
+            changeEl.classList.add(h24 >= 0 ? "is-up" : "is-down");
+          }
+        } else if (priceEl) {
+          priceEl.textContent = money(candles[0][4]);
+        }
+        draw(candles.slice().reverse());
+        if (svg) svg.setAttribute("aria-label", "Whaleoween price, 15 minute candles");
+      }).catch(showEmbed);
+    })();
+  </script>
   <script src="fall.js"></script>
   <script>
     (function () {
