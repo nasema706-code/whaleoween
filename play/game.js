@@ -3,12 +3,17 @@ if (canvas) {
   initTreatHunt(canvas);
 }
 
-const X_PAGE = "https://x.com/i/communities/2011205966444847116";
+const PLAY_URL = "https://whaleoween.netlify.app/play/";
 let tideMark = null;
 
 function tideScoreText(score, name) {
   const who = name ? `${name} scored` : "I scored";
   return `${who} ${score} in Tide Hunt #Tidehunt #beatmyscore`;
+}
+
+function tideComposeUrl(score, name) {
+  const text = `${tideScoreText(score, name)}\n${PLAY_URL}`;
+  return `https://x.com/compose/post?community_id=2011205966444847116&text=${encodeURIComponent(text)}`;
 }
 
 function formatTideScore(score) {
@@ -3366,7 +3371,7 @@ function initTreatHunt(canvas) {
   });
 
   function openScoreOnX() {
-    const opened = window.open(X_PAGE, "_blank");
+    const opened = window.open(tideComposeUrl(state.score, playerName()), "_blank");
     if (opened) opened.opener = null;
     const tell = (copied) => {
       if (!scoreNote) return;
@@ -3377,8 +3382,8 @@ function initTreatHunt(canvas) {
         return;
       }
       scoreNote.textContent = copied
-        ? "Whaleoween on X is open. Paste the card into your post."
-        : "Whaleoween on X is open. Download the card and add it to your post.";
+        ? "Your post is started on Whaleoween’s X page. Paste the card in if you want it."
+        : "Your post is started on Whaleoween’s X page. Download the card and add it.";
     };
     const copyBlob = (blob) => {
       if (!blob || !navigator.clipboard || !window.ClipboardItem) {
