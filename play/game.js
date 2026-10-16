@@ -1389,12 +1389,14 @@ function initTreatHunt(canvas) {
       touchHint.hidden =
         name !== "playing" || window.matchMedia("(pointer: fine)").matches;
     }
+    document.body.classList.toggle("is-over", name === "over");
     if (scoreSharePanel) {
       scoreSharePanel.hidden = name !== "over";
       if (name === "over") {
         const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const steps = document.getElementById("score-steps");
         window.setTimeout(() => {
-          scoreSharePanel.scrollIntoView({ block: "nearest", behavior: reduce ? "auto" : "smooth" });
+          (steps || scoreSharePanel).scrollIntoView({ block: "center", behavior: reduce ? "auto" : "smooth" });
         }, 80);
       }
     }
